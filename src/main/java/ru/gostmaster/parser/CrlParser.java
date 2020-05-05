@@ -1,0 +1,80 @@
+package ru.gostmaster.parser;
+
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.cert.X509CRLHolder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemWriter;
+import org.springframework.stereotype.Component;
+import ru.gostmaster.common.data.crl.Crl;
+import ru.gostmaster.model.MongoCrlData;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.security.NoSuchProviderException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509CRL;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+;
+
+@Component
+@Slf4j
+public class CrlParser {
+    private CertificateFactory certificateFactory;
+
+    public CrlParser() throws CertificateException, NoSuchProviderException {
+        this.certificateFactory = CertificateFactory.getInstance("X509", BouncyCastleProvider.PROVIDER_NAME);
+    }
+
+    public Crl parseRawDataCrl(byte[] bytes, String url) throws RuntimeException {
+        return parseRawDataCrl(new ByteArrayInputStream(bytes), url);
+    }
+    
+    public Crl parseRawDataCrl(InputStream inputStream, String url) throws RuntimeException {
+        try {
+            X509CRL parsed = (X509CRL) certificateFactory.generateCRL(inputStream);
+            X509CRLHolder crlHolder = new X509CRLHolder(parsed.getEncoded());
+            MongoCrlData crl = new MongoCrlData();
+            crl.setCaSubject(crlHolder.getIssuer().toString());
+            crl.setCrlEncodedData(crlAsString(crlHolder.getEncoded()));
+            crl.setNextUpdate(crlHolder.getNextUpdate());
+            crl.setThisUpdate(crlHolder.getThisUpdate());
+            crl.setDownloadedFrom(url);
+            return crl;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    } 
+    
+    public String crlAsString(byte[] crl) throws IOException {
+        StringWriter sw = new StringWriter();
+        PemWriter pemWriter = new JcaPEMWriter(sw);
+        PemObject pemObject = new PemObject("X509 CRL", crl);
+        pemWriter.writeObject(pemObject);
+        pemWriter.flush();
+        return sw.toString();
+    }
+    
+    public X509CRLHolder toHolder(Crl crl) {
+        try  {
+            X509CRL parsed = (X509CRL) certificateFactory
+                .generateCRL(new ByteArrayInputStream(crl.getCrlEncodedData().getBytes()));
+            X509CRLHolder crlHolder = new X509CRLHolder(parsed.getEncoded());
+            return crlHolder;
+        } catch (Exception ex) {
+            log.error("", ex);
+            return null;
+        }
+    }
+    
+    public List<X509CRLHolder> toHolderList(List<Crl> crlList) {
+        return crlList.stream().map(this::toHolder).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+}
