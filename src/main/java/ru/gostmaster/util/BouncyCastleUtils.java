@@ -16,9 +16,11 @@ import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.CRLDistPoint;
 import org.bouncycastle.asn1.x509.DistributionPoint;
 import org.bouncycastle.asn1.x509.DistributionPointName;
+import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -29,9 +31,14 @@ import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.data.util.Pair;
 import org.springframework.util.StringUtils;
+import ru.gostmaster.common.data.verification.AlgorithmDescription;
+import ru.gostmaster.common.data.verification.CertificateKeyUsage;
 import ru.gostmaster.common.data.verification.CertificateSubject;
 import ru.gostmaster.common.data.verification.SignatureCertificateInfo;
 import ru.gostmaster.common.data.verification.SignatureInformationResult;
+import ru.gostmaster.dictionary.AlgorithmsNames;
+import ru.gostmaster.dictionary.ExtendedKeyUsageNames;
+import ru.gostmaster.dictionary.SubjectAttributesOID;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,17 +54,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Класс для работы с сущностями BouncyCastle. 
- * 
+ * Класс для работы с сущностями BouncyCastle.
+ *
  * @author maksimgurin
  */
 @Slf4j
 public final class BouncyCastleUtils {
 
-    private BouncyCastleUtils() { }
-    
+    private BouncyCastleUtils() {
+    }
+
     /**
      * Получить дату подписания документа.
+     *
      * @param signedData информация о подписанте
      * @return дата подписания
      */
@@ -72,7 +81,8 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить текстовое значение атрибута по OID из имени.
-     * @param name имя в формате X500Name
+     *
+     * @param name         имя в формате X500Name
      * @param attributeOid OID получаемого атрибута
      * @return значение полученного атрибута
      */
@@ -88,7 +98,8 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить текстовое значение атрибута по OID из имени.
-     * @param name имя в формате X500Name
+     *
+     * @param name             имя в формате X500Name
      * @param objectIdentifier OID получаемого атрибута
      * @return значение полученного атрибута
      */
@@ -97,6 +108,9 @@ public final class BouncyCastleUtils {
             RDN[] rdNs = name.getRDNs(objectIdentifier);
             String res = Arrays.stream(rdNs).map(rdn -> rdn.getFirst().getValue().toString())
                 .collect(Collectors.joining(", "));
+            if (!StringUtils.hasText(res)) {
+                res = null;
+            }
             return res;
         } catch (Exception ex) {
             log.error("", ex.getMessage());
@@ -106,10 +120,11 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить идентификатор субъекта данного сертификата.
+     *
      * @param certificate сертификат
      * @return идентификатор в виде строки
      * @throws NoSuchAlgorithmException если алгоритм сертификата не поддерживается
-     * @throws IOException в случае ошибки доступа к данным сертификата
+     * @throws IOException              в случае ошибки доступа к данным сертификата
      */
     public static String getSubjectKeyIdentifier(X509Certificate certificate) throws NoSuchAlgorithmException, IOException {
         SubjectKeyIdentifier subjectKeyIdentifier = SubjectKeyIdentifier
@@ -121,10 +136,11 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить идентификатор издателя данного сертификата.
+     *
      * @param certificate сертификат
      * @return идентификатор в виде строки
      * @throws NoSuchAlgorithmException если алгоритм сертификата не поддерживается
-     * @throws IOException в случае ошибки доступа к данным сертификата
+     * @throws IOException              в случае ошибки доступа к данным сертификата
      */
     public static String getAuthorityKeyIdentifier(X509Certificate certificate) throws NoSuchAlgorithmException, IOException {
         byte[] extensionValue = certificate
@@ -141,10 +157,11 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить идентификатор издателя данного списка отозванных сертификатов (CRL).
+     *
      * @param crl СRL
      * @return идентификатор в виде строки
      * @throws NoSuchAlgorithmException если алгоритм CRL не поддерживается
-     * @throws IOException в случае ошибки доступа к данным CRL
+     * @throws IOException              в случае ошибки доступа к данным CRL
      */
     public static String getAuthorityKeyIdentifier(X509CRL crl) throws NoSuchAlgorithmException, IOException {
         AuthorityKeyIdentifier authorityKeyIdentifier = AuthorityKeyIdentifier
@@ -156,6 +173,7 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить список ссылок, по которым доступны CRL для данного сертификата.
+     *
      * @param certificate сертификат
      * @return список со ссылками на CRL
      */
@@ -193,7 +211,7 @@ public final class BouncyCastleUtils {
                     }
                 }
             }
-            
+
         } catch (Exception ex) {
             log.error("", ex);
         }
@@ -202,6 +220,7 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить список ссылок, по которым доступны CRL для данного сертификата.
+     *
      * @param certificateHolder сертификат
      * @return список со ссылками на CRL
      */
@@ -211,10 +230,10 @@ public final class BouncyCastleUtils {
         try {
             byte[] crlDistributionPointDerEncodedArray = certificateHolder.getExtensions()
                 .getExtension(Extension.cRLDistributionPoints).getEncoded();
-            
-            ASN1InputStream oAsnInStream = 
+
+            ASN1InputStream oAsnInStream =
                 new ASN1InputStream(new ByteArrayInputStream(crlDistributionPointDerEncodedArray));
-            
+
             ASN1Primitive derObjCrlDP = oAsnInStream.readObject();
             DEROctetString dosCrlDP = (DEROctetString) derObjCrlDP;
 
@@ -243,7 +262,7 @@ public final class BouncyCastleUtils {
                     }
                 }
             }
-            
+
         } catch (Exception ex) {
             log.error("", ex.getMessage());
         }
@@ -252,8 +271,9 @@ public final class BouncyCastleUtils {
 
     /**
      * Построить объект SignatureInformationResult из подписанных данных и данных о подписанте.
+     *
      * @param signerInformation данные о подписанте
-     * @param cmsSignedData подписанные данные
+     * @param cmsSignedData     подписанные данные
      * @return SignatureInformationResult
      */
     public static SignatureInformationResult fromSignatureInformationAndSignedData(SignerInformation signerInformation,
@@ -264,16 +284,17 @@ public final class BouncyCastleUtils {
 
     /**
      * Построить объект SignatureInformationResult из сертификатов и данных о подписанте.
-     * @param signerInformation данные о подписанте
+     *
+     * @param signerInformation  данные о подписанте
      * @param certificateHolders подписанные данные
      * @return SignatureInformationResult
      */
-    public static SignatureInformationResult fromSignatureInformationAndCertificates(SignerInformation signerInformation, 
+    public static SignatureInformationResult fromSignatureInformationAndCertificates(SignerInformation signerInformation,
                                                                                      Collection<X509CertificateHolder> certificateHolders) {
         SignatureInformationResult information = new SignatureInformationResult();
         information.setSignedAt(BouncyCastleUtils.getSignedDate(signerInformation));
         List<SignatureCertificateInfo> certInfos = certificateHolders.stream()
-            .map(BouncyCastleUtils::fromSignatureCertificateHolder)
+            .map(cert -> BouncyCastleUtils.fromSignatureCertificateHolder(cert, signerInformation))
             .collect(Collectors.toList());
         information.setSignatureCertificateInfo(certInfos);
         return information;
@@ -281,13 +302,22 @@ public final class BouncyCastleUtils {
 
     /**
      * Получить информацию о сертификате в виде SignatureCertificateInfo.
+     *
      * @param certificateHolder сертификат.
+     * @param signerInformation инфа о подписанте
      * @return SignatureCertificateInfo
      */
-    public static SignatureCertificateInfo fromSignatureCertificateHolder(X509CertificateHolder certificateHolder) {
+    public static SignatureCertificateInfo fromSignatureCertificateHolder(X509CertificateHolder certificateHolder,
+                                                                          SignerInformation signerInformation) {
         SignatureCertificateInfo res = new SignatureCertificateInfo();
         res.setIssuer(buildSubject(certificateHolder.getIssuer()));
         res.setSubject(buildSubject(certificateHolder.getSubject()));
+
+        res.setHashAlgorithm(buildHashAlgDescritpion(signerInformation));
+        res.setSignatureAlgorithm(buildSignatureAlgDecription(certificateHolder));
+
+        res.setKeyUsage(getKeyUsages(certificateHolder));
+
         res.setValidFrom(certificateHolder.getNotBefore());
         res.setValidTo(certificateHolder.getNotAfter());
         return res;
@@ -295,6 +325,7 @@ public final class BouncyCastleUtils {
 
     /**
      * Сконструировать CertificateSubject на основании данных о владельце сертификата.
+     *
      * @param name данные о владельце.
      * @return CertificateSubject
      */
@@ -302,22 +333,27 @@ public final class BouncyCastleUtils {
         CertificateSubject subject = new CertificateSubject();
         subject.setOrganization(BouncyCastleUtils.getAttributeValue(name, BCStyle.O));
         subject.setOrganizationUnit(BouncyCastleUtils.getAttributeValue(name, BCStyle.OU));
-        subject.setName(BouncyCastleUtils.getAttributeValue(name, BCStyle.CN));
-        subject.setInn(BouncyCastleUtils.getAttributeValue(name, "1.2.643.3.131.1.1"));
-        subject.setOgrn(BouncyCastleUtils.getAttributeValue(name, "1.2.643.100.1"));
-        String location = Stream.of(
-            BouncyCastleUtils.getAttributeValue(name, BCStyle.C),
-            BouncyCastleUtils.getAttributeValue(name, BCStyle.L),
-            BouncyCastleUtils.getAttributeValue(name, BCStyle.ST),
-            BouncyCastleUtils.getAttributeValue(name, BCStyle.STREET)
-        ).filter(StringUtils::hasText).collect(Collectors.joining(", "));
-        subject.setLocation(location);
         subject.setEmail(BouncyCastleUtils.getAttributeValue(name, BCStyle.E));
+        subject.setTitle(BouncyCastleUtils.getAttributeValue(name, BCStyle.T));
+        subject.setCommonName(BouncyCastleUtils.getAttributeValue(name, BCStyle.CN));
+        subject.setCountry(BouncyCastleUtils.getAttributeValue(name, BCStyle.C));
+        subject.setState(BouncyCastleUtils.getAttributeValue(name, BCStyle.ST));
+        subject.setStreet(BouncyCastleUtils.getAttributeValue(name, BCStyle.STREET));
+        subject.setLocality(BouncyCastleUtils.getAttributeValue(name, BCStyle.L));
+        subject.setSurname(BouncyCastleUtils.getAttributeValue(name, BCStyle.SURNAME));
+        subject.setGivenName(BouncyCastleUtils.getAttributeValue(name, BCStyle.GIVENNAME));
+        subject.setInn(BouncyCastleUtils.getAttributeValue(name, SubjectAttributesOID.INN));
+        subject.setKpp(null);
+        subject.setOgrn(BouncyCastleUtils.getAttributeValue(name, SubjectAttributesOID.OGRN));
+        subject.setSnils(BouncyCastleUtils.getAttributeValue(name, SubjectAttributesOID.SNILS));
+        subject.setOgrnip(BouncyCastleUtils.getAttributeValue(name, SubjectAttributesOID.OGRNIP));
+
         return subject;
     }
 
     /**
      * Получить пары типа подписанные данные-подписант.
+     *
      * @param signedData подписанные данные
      * @return список пар
      */
@@ -329,12 +365,46 @@ public final class BouncyCastleUtils {
 
     /**
      * Создание представления подписанного содержимого в терминах BouncyCastle.
+     *
      * @param data данные
-     * @param sig подпись (DER)
+     * @param sig  подпись (DER)
      * @return CMSSignedData
      * @throws CMSException при ошибке
      */
     public static CMSSignedData createCMSSignedData(byte[] data, byte[] sig) throws CMSException {
         return new CMSSignedData(new CMSProcessableByteArray(data), sig);
+    }
+
+    private static AlgorithmDescription buildHashAlgDescritpion(SignerInformation signerInformation) {
+        String hashAlgOid = signerInformation.getDigestAlgOID();
+        String hashAlgName = AlgorithmsNames.getAlgorithmName(hashAlgOid);
+        AlgorithmDescription res = new AlgorithmDescription();
+        res.setOid(hashAlgOid);
+        res.setName(hashAlgName);
+        return res;
+    }
+
+    private static AlgorithmDescription buildSignatureAlgDecription(X509CertificateHolder certificateHolder) {
+        String encAlgOid = certificateHolder.getSignatureAlgorithm().getAlgorithm().getId();
+        String endAlgName = AlgorithmsNames.getAlgorithmName(encAlgOid);
+        AlgorithmDescription res = new AlgorithmDescription();
+        res.setOid(encAlgOid);
+        res.setName(endAlgName);
+        return res;
+    }
+
+    private static List<CertificateKeyUsage> getKeyUsages(X509CertificateHolder certificateHolder) {
+        ExtendedKeyUsage extendedKeyUsage = ExtendedKeyUsage.fromExtensions(certificateHolder.getExtensions());
+        List<CertificateKeyUsage> res = Stream.of(extendedKeyUsage.getUsages())
+            .map(KeyPurposeId::getId)
+            .map(oid -> {
+                CertificateKeyUsage usage = new CertificateKeyUsage();
+                usage.setOid(oid);
+                usage.setName(ExtendedKeyUsageNames.getUsageName(oid));
+                return usage;
+            })
+            .collect(Collectors.toList());
+
+        return res;
     }
 }

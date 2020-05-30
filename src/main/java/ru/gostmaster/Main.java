@@ -28,5 +28,20 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         ApplicationContext context = SpringApplication.run(Main.class, args);
+//        File sig = new File("/Users/maksimgurin/Downloads/7127021a-7816-4977-a6e2-279257d8fb27.pdf.sig");
+//        File data = new File("/Users/maksimgurin/Downloads/7127021a-7816-4977-a6e2-279257d8fb27.pdf");
+//        byte[] sigByttes = Files.toByteArray(sig);
+//        byte[] dataBytes = Files.toByteArray(data);
+//
+//        CMSSignedData signedData = new CMSSignedData(new CMSProcessableByteArray(dataBytes), sigByttes);
+//        SignerInformation signerInformation = signedData.getSignerInfos().getSigners().stream().findAny().get();
+//        X509CertificateHolder holder = signedData.getCertificates().getMatches(null).stream().findAny().get();
+//
+////        CertificateFactory factory = CertificateFactory.getInstance("X509", BouncyCastleProvider.PROVIDER_NAME);
+////        X509Certificate certificate = (X509Certificate) factory.generateCertificate(new FileInputStream(cer));
+////        X509CertificateHolder holder = new X509CertificateHolder(certificate.getEncoded());
+//        SignatureCertificateInfo signatureCertificateInfo = BouncyCastleUtils.fromSignatureCertificateHolder(holder, 
+//            signerInformation);
+//        System.out.println();
     }
 }

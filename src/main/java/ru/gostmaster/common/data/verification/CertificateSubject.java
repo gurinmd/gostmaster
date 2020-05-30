@@ -10,12 +10,40 @@ import lombok.Data;
  */
 @Data
 public class CertificateSubject {
+    
     private String organization;
+    
     @JsonProperty("organization_unit")
     private String organizationUnit;
-    private String name;
-    private String inn;
-    private String ogrn;
-    private String location;
+    
     private String email;
+    
+    private String title;
+    
+    @JsonProperty("common_name")
+    private String commonName;
+    
+    private String country;
+    
+    private String state;
+    
+    private String street;
+    
+    private String locality;
+    
+    private String surname;
+    
+    @JsonProperty("given_name")
+    private String givenName;
+    
+    private String inn;
+    
+    private String kpp;
+    
+    private String ogrn;
+    
+    private String snils;
+    
+    private String ogrnip;
+    
 }

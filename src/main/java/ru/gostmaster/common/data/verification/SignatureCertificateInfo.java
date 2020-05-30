@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * DTO для информации о сертификате.
@@ -19,4 +20,13 @@ public class SignatureCertificateInfo {
     private Date validFrom;
     @JsonProperty("valid_to")
     private Date validTo;
+    
+    @JsonProperty("key_usage")
+    private List<CertificateKeyUsage> keyUsage;
+
+    @JsonProperty("signature_algorithm")
+    private AlgorithmDescription signatureAlgorithm;
+
+    @JsonProperty("hash_algorithm")
+    private AlgorithmDescription hashAlgorithm;
 }
