@@ -8,8 +8,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class CollectionsUtils {
+/**
+ * Методы для работы с коллекциями.
+ * 
+ * @author maksimgurin 
+ */
+public final class CollectionsUtils {
 
+    private CollectionsUtils() { }
+        
     /**
      * Меняем список так, чтобы остались только уникальные элементы.
      * @param sourceList исходный список

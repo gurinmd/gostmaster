@@ -14,12 +14,16 @@ import ru.gostmaster.model.MongoCrlData;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Реализация хранилища CRL в MongoDB.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 public class MongoCrlStorage implements CRLStorage {
     
     private ReactiveMongoTemplate reactiveMongoTemplate;
     
-
     @Override
     public Mono<Void> deleteAllCrls() {
         Query query = Query.query(new Criteria());
@@ -33,8 +37,9 @@ public class MongoCrlStorage implements CRLStorage {
     
     @Override
     public Flux<Crl> getAllByDownloadedFromOrCa(List<String> downloadedFrom, List<String> ca) {
-        Query query = Query.query(Criteria.where(MongoCrlData.F_DONWLOADED_FROM).in(downloadedFrom)
-            .orOperator(Criteria.where(MongoCrlData.F_CA_SUBJECT).in(ca)));
+        Query query = Query.query(new Criteria()
+            .orOperator(Criteria.where(MongoCrlData.F_ISSUER_KEY).in(ca), 
+                Criteria.where(MongoCrlData.F_DONWLOADED_FROM).in(downloadedFrom)));
         return reactiveMongoTemplate.find(query, MongoCrlData.class).map(Function.identity());
     }
 

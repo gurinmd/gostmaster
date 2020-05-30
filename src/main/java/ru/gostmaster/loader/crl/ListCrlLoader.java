@@ -5,24 +5,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import ru.gostmaster.common.reactor.FluxHelper;
 import ru.gostmaster.common.data.crl.Crl;
+import ru.gostmaster.common.reactor.CrlFluxHelper;
 import ru.gostmaster.common.spi.loader.CRLLoader;
 import ru.gostmaster.util.FileUtils;
 
+/**
+ * Компонент-загрузчик CRL из файла со списком URL.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 @Slf4j
 public class ListCrlLoader implements CRLLoader {
 
     private String crlUrlsListFile;
-    private FluxHelper fluxHelper;
-
-
+    private CrlFluxHelper crlFluxHelper;
+    
     @Override
     public Flux<Crl> loadCertificateRevocationLists() {
         log.info("Loading all crl from url list file {}", crlUrlsListFile);
         Flux<String> urls = FileUtils.fileLines(crlUrlsListFile);
-        Flux<Crl> res = fluxHelper.getCrlFluxFromUrls(urls);
+        Flux<Crl> res = crlFluxHelper.getCrlFluxFromUrls(urls);
         return res;
     }
 
@@ -32,7 +36,7 @@ public class ListCrlLoader implements CRLLoader {
     }
 
     @Autowired
-    public void setFluxHelper(FluxHelper fluxHelper) {
-        this.fluxHelper = fluxHelper;
+    public void setCrlFluxHelper(CrlFluxHelper crlFluxHelper) {
+        this.crlFluxHelper = crlFluxHelper;
     }
 }

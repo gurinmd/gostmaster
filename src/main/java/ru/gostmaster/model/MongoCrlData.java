@@ -8,15 +8,20 @@ import ru.gostmaster.common.data.crl.Crl;
 
 import java.util.Date;
 
+/**
+ * Реализация сущности списка отозванных сертификатов (CRL) для хранения в MongoDB.
+ * 
+ * @author maksimgurin 
+ */
 @Document(collection = "crl")
 @Data
 @ToString
 public class MongoCrlData implements Crl {
-    public static final String F_CA_SUBJECT = "caSubject";
+    public static final String F_ISSUER_KEY = "issuerKey";
     public static final String F_DONWLOADED_FROM = "downloadedFrom";
     @Indexed
-    private String caSubject;
-    private String crlEncodedData;
+    private String issuerKey;
+    private String pemData;
     private Date nextUpdate;
     private Date thisUpdate;
     @Indexed

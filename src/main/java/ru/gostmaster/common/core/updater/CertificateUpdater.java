@@ -7,27 +7,49 @@ import ru.gostmaster.common.data.cert.Certificate;
 import ru.gostmaster.common.spi.loader.CertificateLoader;
 import ru.gostmaster.common.spi.storage.CertificateStorage;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Класс, который занимается обновлением списка сертификатов в хранилище.
+ * 
+ * @author maksimgurin 
+ */
 @Slf4j
 public class CertificateUpdater {
     
-    private CertificateLoader trustedCertificateLoader;
-    private CertificateLoader intermediateCertificateLoader;
+    private List<CertificateLoader> trustedCertificateLoaders;
+    private List<CertificateLoader> intermediateCertificateLoaders;
     private CertificateStorage certificateStorage;
 
-    public CertificateUpdater(CertificateLoader trustedCertificateLoader,
-                              CertificateLoader intermediateCertificateLoader,
+    /**
+     * Конструктор.
+     * @param trustedCertificateLoaders загрузчики доверенных сертификатов
+     * @param intermediateCertificateLoaders загрузчики промежуточных сертификатов
+     * @param certificateStorage хранилище сертификатов
+     */
+    public CertificateUpdater(List<CertificateLoader> trustedCertificateLoaders, 
+                              List<CertificateLoader> intermediateCertificateLoaders, 
                               CertificateStorage certificateStorage) {
-        this.trustedCertificateLoader = trustedCertificateLoader;
-        this.intermediateCertificateLoader = intermediateCertificateLoader;
+        this.trustedCertificateLoaders = trustedCertificateLoaders;
+        this.intermediateCertificateLoaders = intermediateCertificateLoaders;
         this.certificateStorage = certificateStorage;
     }
 
+    /**
+     * Обновить доверенные сертификаты.
+     * @return void
+     */
     public Mono<Void> uploadNewTrustedCertificates() {
         Flux<Certificate> certificatesToLoad = loadTrustedCertificates();
         return certificateStorage.deleteAllTrusted()
             .then(certificateStorage.saveAllCertificates(certificatesToLoad));
     }
 
+    /**
+     * Обновить промежуточные сертификаты.
+     * @return void
+     */
     public Mono<Void> uploadNewIntermediateCertificates() {
         Flux<Certificate> certificatesToLoad = loadIntermediateCertificates();
         return certificateStorage.deleteAllIntermediate()
@@ -35,14 +57,22 @@ public class CertificateUpdater {
     }
     
     private Flux<Certificate> loadIntermediateCertificates() {
-        return intermediateCertificateLoader
-            .loadCertificates()
-            .filter(certificate -> !certificate.isTrusted());
+        List<Flux<Certificate>> allIntermCers = intermediateCertificateLoaders
+            .stream().map(CertificateLoader::loadCertificates).collect(Collectors.toList());
+        return Flux.merge(allIntermCers)
+            .map(certificate -> {
+                certificate.setTrusted(false);
+                return certificate;
+            });
     }
 
     private Flux<Certificate> loadTrustedCertificates() {
-        return trustedCertificateLoader
-            .loadCertificates()
-            .filter(Certificate::isTrusted);
+        List<Flux<Certificate>> allTrustedCerts = trustedCertificateLoaders
+            .stream().map(CertificateLoader::loadCertificates).collect(Collectors.toList());
+        return Flux.merge(allTrustedCerts)
+            .map(certificate -> {
+                certificate.setTrusted(true);
+                return certificate;
+            });
     }
 }

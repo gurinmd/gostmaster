@@ -5,6 +5,11 @@ import lombok.Data;
 
 import java.util.Date;
 
+/**
+ * DTO для информации о сертификате.
+ * 
+ * @author maksimgurin 
+ */
 @Data
 public class SignatureCertificateInfo {
     private CertificateSubject subject;

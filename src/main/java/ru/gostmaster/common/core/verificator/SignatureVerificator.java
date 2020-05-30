@@ -33,6 +33,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Класс проверки подписи и валидности сертификата подписи.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 @Slf4j
 public class SignatureVerificator {
@@ -41,6 +46,12 @@ public class SignatureVerificator {
     private CertificateStorage certificateStorage;
     private CrlParser crlParser;
 
+    /**
+     * Проверить данные  и подпись.
+     * @param data данные
+     * @param signature подпись в формате DER
+     * @return VerificationResult
+     */
     public Mono<VerificationResult> verify(byte[] data, byte[] signature) {
         Mono<Pair<VerificationResult, CMSSignedData>> initCheckMono = initVerification(data, signature);
 
@@ -73,7 +84,7 @@ public class SignatureVerificator {
             CMSSignedData signedData = null;
             try {
                 //1. Проверка, что пришли нормальные данные
-                signedData = SignatureVerificationHelper.createCMSSignedData(data, signature);
+                signedData = BouncyCastleUtils.createCMSSignedData(data, signature);
             } catch (Exception ex) {
                 log.error("", ex);
                 result.setSignatureCheckResultSuccess(false);
@@ -83,8 +94,7 @@ public class SignatureVerificator {
         });
         return pairMono;
     }
-
-
+    
     private Mono<SignatureInformationResult> createVerificationResult(CMSSignedData signedData,
                                                                       SignerInformation signerInformation) {
         SignatureInformationResult result = BouncyCastleUtils.fromSignatureInformationAndSignedData(signerInformation, signedData);
@@ -128,12 +138,13 @@ public class SignatureVerificator {
     }
 
     private Mono<List<X509CRLHolder>> getCrls(Mono<List<Certificate>> certificates) {
-        Mono<List<String>> cas = certificates.map(certs -> certs.stream().map(Certificate::getSubject).collect(Collectors.toList()));
+        Mono<List<String>> cas = certificates.map(certs -> certs.stream().map(Certificate::getSubjectKey).collect(Collectors.toList()));
 
         Mono<List<String>> urls = certificates.map(certs -> certs.stream().flatMap(certificate ->
             Optional.ofNullable(certificate.getCrlUrls()).orElse(Collections.emptyList()).stream()).collect(Collectors.toList()));
 
-        Mono<List<X509CRLHolder>> res = Mono.zip(cas, urls, (caList, urlList) -> crlStorage.getAllByDownloadedFromOrCa(urlList, caList).collectList())
+        Mono<List<X509CRLHolder>> res = Mono.zip(cas, urls, (caList, urlList) -> crlStorage
+            .getAllByDownloadedFromOrCa(urlList, caList).collectList())
             .flatMap(listMono -> listMono)
             .map(crls -> crlParser.toHolderList(crls));
 
@@ -148,7 +159,7 @@ public class SignatureVerificator {
                 if (certificate.isTrusted()) {
                     try {
                         X509Certificate cert = (X509Certificate) certificateFactory
-                            .generateCertificate(new ByteArrayInputStream(certificate.getCertificateEncodedData().getBytes()));
+                            .generateCertificate(new ByteArrayInputStream(certificate.getPemData().getBytes()));
                         set.add(new TrustAnchor(cert, null));
                     } catch (Exception ex) {
                         log.error("", ex.getMessage());
@@ -168,7 +179,7 @@ public class SignatureVerificator {
                 if (!certificate.isTrusted()) {
                     try {
                         X509Certificate parsedCert = (X509Certificate) factory
-                            .generateCertificate(new ByteArrayInputStream(certificate.getCertificateEncodedData().getBytes()));
+                            .generateCertificate(new ByteArrayInputStream(certificate.getPemData().getBytes()));
                         X509CertificateHolder holder = new X509CertificateHolder(parsedCert.getEncoded());
                         holders.add(holder);
                     } catch (Exception ex) {

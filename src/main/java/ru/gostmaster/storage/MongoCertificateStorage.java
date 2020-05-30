@@ -20,6 +20,11 @@ import ru.gostmaster.util.CollectionsUtils;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Реализация хранилища сертификатов в MongoDB.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 public class MongoCertificateStorage implements CertificateStorage {
     
@@ -31,12 +36,13 @@ public class MongoCertificateStorage implements CertificateStorage {
         GraphLookupOperation graphLookupOperation = Aggregation
             .graphLookup(MongoCertificateData.COLLECTION)
             .startWith(MongoCertificateData.F_SUBJECT_EXPRESSION)
-            .connectFrom(MongoCertificateData.F_ISSUER)
-            .connectTo(MongoCertificateData.F_SUBJECT)
+            .connectFrom(MongoCertificateData.F_ISSUER_KEY)
+            .connectTo(MongoCertificateData.F_SUBJECT_KEY)
             .as(MongoCertificateData.F_CHAIN);
         Aggregation aggregation = Aggregation.newAggregation(matchOperation, graphLookupOperation);
         
-        Flux<MongoCertificateData> documentFlux = reactiveMongoTemplate.aggregate(aggregation, MongoCertificateData.class, MongoCertificateData.class);
+        Flux<MongoCertificateData> documentFlux = reactiveMongoTemplate.aggregate(aggregation, 
+            MongoCertificateData.class, MongoCertificateData.class);
         
         Flux<Certificate> certificateFlux = documentFlux.flatMap(cert -> Flux.fromIterable(cert.getChain()));
         return certificateFlux.collectList()
@@ -99,7 +105,7 @@ public class MongoCertificateStorage implements CertificateStorage {
     
     private Document toDocument(Object object) {
         Document document = new Document();
-        reactiveMongoTemplate.getConverter().write(object,document);
+        reactiveMongoTemplate.getConverter().write(object, document);
         return document;
     }
 }

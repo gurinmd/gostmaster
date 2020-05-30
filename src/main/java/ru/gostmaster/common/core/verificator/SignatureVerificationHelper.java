@@ -5,7 +5,6 @@ import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSProcessableByteArray;
 import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
@@ -30,13 +29,31 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Класс с утилитными методами для верификации подписи.
+ * 
+ * @author maksimgurin 
+ */
 @Slf4j
-public class SignatureVerificationHelper {
+public final class SignatureVerificationHelper {
 
-    public static boolean isSignerInfoValid(SignerInformation signerInformation, CMSSignedData cmsSignedData) throws CertificateException,
+    private SignatureVerificationHelper() { }
+
+    /**
+     * Проверяем, соотвествует ли подпись содержимому.
+     * @param signerInformation инфа о подписи
+     * @param cmsSignedData содержимое
+     * @return true - соотвествует, false - нет
+     * @throws CertificateException при ошибке работы BouncyCastle
+     * @throws CMSException при ошибке работы BouncyCastle
+     * @throws OperatorCreationException при ошибке работы BouncyCastle
+     */
+    public static boolean isSignerInfoValid(SignerInformation signerInformation, CMSSignedData cmsSignedData) 
+        throws CertificateException,
         CMSException,
         OperatorCreationException {
-        Collection<X509CertificateHolder> certs = cmsSignedData.getCertificates().getMatches(signerInformation.getSID());
+        Collection<X509CertificateHolder> certs = cmsSignedData.getCertificates()
+            .getMatches(signerInformation.getSID());
         boolean res = true;
         for (X509CertificateHolder certificateHolder : certs) {
             res &= isSignerInfoValid(signerInformation, certificateHolder);
@@ -44,11 +61,21 @@ public class SignatureVerificationHelper {
         return res;
     }
 
-    public static boolean isSignerInfoValid(SignerInformation signerInformation, X509CertificateHolder holder) throws CMSException,
+    private static boolean isSignerInfoValid(SignerInformation signerInformation, X509CertificateHolder holder) throws CMSException,
         CertificateException, OperatorCreationException {
         return signerInformation.verify(new JcaSimpleSignerInfoVerifierBuilder().build(holder));
     }
 
+    /**
+     * Проверяем валидность сертификата подписи.
+     * @param trusted список доверенных сертификатов
+     * @param intermCerts список промежуточных сертификатов
+     * @param crls списки отозванных сертификатов
+     * @param cmsSignedData подписанное содержимое
+     * @param signerInformation информация о подписанте
+     * @param signatureInformationResult подготовленный объект, в который добавляется информация
+     * @return signatureInformationResult
+     */
     public static SignatureInformationResult validateSignatureCertificate(Set<TrustAnchor> trusted,
                                                                           List<X509CertificateHolder> intermCerts,
                                                                           List<X509CRLHolder> crls,
@@ -75,14 +102,15 @@ public class SignatureVerificationHelper {
         }
         return signatureInformationResult;
     }
-
-    public static PKIXCertPathBuilderResult validChainWithCrl(Set<TrustAnchor> trusted,
+    
+    private static PKIXCertPathBuilderResult validChainWithCrl(Set<TrustAnchor> trusted,
                                                               List<X509CertificateHolder> intermCerts,
                                                               List<X509CRLHolder> crls,
                                                               X509CertificateHolder signatureCertificate) {
         try {
 
-            CertPathBuilder pathValidator = CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME);
+            CertPathBuilder pathValidator = CertPathBuilder.getInstance("PKIX", 
+                BouncyCastleProvider.PROVIDER_NAME);
             X509CertSelector targetConstraints = new X509CertSelector();
             targetConstraints.setSubject(signatureCertificate.getSubject().getEncoded());
 
@@ -109,15 +137,12 @@ public class SignatureVerificationHelper {
             return (PKIXCertPathBuilderResult) pathValidator.build(params);
 
         } catch (Exception ex) {
+            log.error("", ex);
             throw new SignatureVerificationException(ex);
         }
     }
 
-    public static CMSSignedData createCMSSignedData(byte[] data, byte[] sig) throws CMSException {
-        return new CMSSignedData(new CMSProcessableByteArray(data), sig);
-    }
-
-    public static String getReadableErrorMessage(SignatureVerificationException ex) {
+    private static String getReadableErrorMessage(SignatureVerificationException ex) {
         String res;
         Throwable cause = GetterUtils.get(() -> ex.getCause().getCause().getCause(), new CertificateException());
         if (cause instanceof CertificateExpiredException) {

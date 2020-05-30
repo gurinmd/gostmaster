@@ -9,8 +9,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import ru.gostmaster.common.reactor.FluxHelper;
 import ru.gostmaster.common.data.crl.Crl;
+import ru.gostmaster.common.reactor.CrlFluxHelper;
 import ru.gostmaster.common.spi.loader.CRLLoader;
 
 import java.io.InputStream;
@@ -19,12 +19,17 @@ import java.net.URLConnection;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+/**
+ * Компонент-загрузчик для загрузки CRL с сайта Минкомсвязи.
+ *
+ * @author maksimgurin
+ */
 @Slf4j
 @Component
 public class XMLInetCrlLoader implements CRLLoader {
 
     private String url;
-    private FluxHelper fluxHelper;
+    private CrlFluxHelper crlFluxHelper;
 
     @Override
     public Flux<Crl> loadCertificateRevocationLists() {
@@ -44,7 +49,7 @@ public class XMLInetCrlLoader implements CRLLoader {
             }
         });
 
-        Flux<Crl> res = fluxHelper.getCrlFluxFromUrls(urlFlux);
+        Flux<Crl> res = crlFluxHelper.getCrlFluxFromUrls(urlFlux);
         return res;
     }
 
@@ -54,53 +59,58 @@ public class XMLInetCrlLoader implements CRLLoader {
     }
 
     @Autowired
-    public void setFluxHelper(FluxHelper fluxHelper) {
-        this.fluxHelper = fluxHelper;
-    }
-}
-
-@Slf4j
-class XMLCRLDefaultHandler extends DefaultHandler {
-    private FluxSink<String> fluxSink;
-    private StringBuilder urlBuilder = new StringBuilder();
-
-    private static final String CRL_PARENT_ELEMENT = "АдресаСписковОтзыва";
-    private static final String CRL_URL = "Адрес";
-    private String currentElement;
-    private String previousElement;
-    private Boolean inCrlAddress = false;
-
-    public XMLCRLDefaultHandler(FluxSink<String> fluxSink) {
-        this.fluxSink = fluxSink;
+    public void setCrlFluxHelper(CrlFluxHelper crlFluxHelper) {
+        this.crlFluxHelper = crlFluxHelper;
     }
 
-    @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        previousElement = currentElement;
-        currentElement = qName;
-        inCrlAddress = CRL_PARENT_ELEMENT.equals(previousElement) && CRL_URL.equals(currentElement);
-    }
+    /**
+     * SAX hadnler, который отдает ссылки на CRL по мере их получения из XML&.
+     *
+     * @author maksimgurin
+     */
+    @Slf4j
+    private static class XMLCRLDefaultHandler extends DefaultHandler {
+        private static final String CRL_PARENT_ELEMENT = "АдресаСписковОтзыва";
+        private static final String CRL_URL = "Адрес";
+        
+        private FluxSink<String> fluxSink;
+        private StringBuilder urlBuilder = new StringBuilder();
+        private String currentElement;
+        private String previousElement;
+        private Boolean inCrlAddress = false;
 
-    @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
-        if (inCrlAddress) {
-            String address = urlBuilder.toString();
-            log.debug("Added address {}", address);
-            fluxSink.next(address);
-            urlBuilder = new StringBuilder();
-            inCrlAddress = false;
+        XMLCRLDefaultHandler(FluxSink<String> fluxSink) {
+            this.fluxSink = fluxSink;
         }
-    }
 
-    @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
-        if (inCrlAddress) {
-            urlBuilder.append(ch, start, length);
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            previousElement = currentElement;
+            currentElement = qName;
+            inCrlAddress = CRL_PARENT_ELEMENT.equals(previousElement) && CRL_URL.equals(currentElement);
         }
-    }
 
-    @Override
-    public void endDocument() throws SAXException {
-        fluxSink.complete();
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            if (inCrlAddress) {
+                String address = urlBuilder.toString();
+                log.debug("Added address {}", address);
+                fluxSink.next(address);
+                urlBuilder = new StringBuilder();
+                inCrlAddress = false;
+            }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            if (inCrlAddress) {
+                urlBuilder.append(ch, start, length);
+            }
+        }
+
+        @Override
+        public void endDocument() throws SAXException {
+            fluxSink.complete();
+        }
     }
 }

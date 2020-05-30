@@ -1,12 +1,15 @@
 package ru.gostmaster.common.messages;
 
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 
-public class Messages {
+/**
+ * Класс с сообщениями, которые отправляются в ответе пользователю.
+ * 
+ * @author maksimgurin 
+ */
+public final class Messages {
+    
     public static final String CORRUPTED_DATA = "CORRUPTED_DATA";
     public static final String VALID_SIGNED_CONTENT = "VALID_SIGNED_CONTENT";
     public static final String INVALID_SIGNED_CONTENT = "INVALID_SIGNED_CONTENT";
@@ -27,6 +30,13 @@ public class Messages {
         messages.put(CERTIFICATE_VALID, "Действительность сертификата подтверждена");
     }
     
+    private Messages() { }
+
+    /**
+     * Получить сообщение по ключу.
+     * @param key ключ
+     * @return сообщение или ключ, если сообщение по ключу не найдено
+     */
     public static String getMessage(String key) {
         return messages.getOrDefault(key, key);
     }

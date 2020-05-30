@@ -11,9 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import ru.gostmaster.common.data.cert.Certificate;
 import ru.gostmaster.common.spi.loader.CertificateLoader;
-import ru.gostmaster.model.MongoCertificateData;
 import ru.gostmaster.parser.CertificateParser;
-import sun.security.provider.X509Factory;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -21,13 +19,20 @@ import java.net.URLConnection;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-@Component
+/**
+ * Компонент-загрузчик сертификатов с сайта Минкомсвязи.
+ * 
+ * @author maksimgurin 
+ */
 @Slf4j
+@Component
 public class XMLInetCertificateLoader implements CertificateLoader {
+
+    private static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+    private static final String END_CERT = "-----END CERTIFICATE-----";
     
     private String url;
     private CertificateParser certificateParser;
-    private boolean trusted = false;
 
     @Override
     public Flux<Certificate> loadCertificates() {
@@ -40,7 +45,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
 
                 SAXParserFactory factory = SAXParserFactory.newInstance();
                 SAXParser parser = factory.newSAXParser();
-                XMLCertificateDefaultHandler handler = new XMLCertificateDefaultHandler(fluxSink, trusted, certificateParser);
+                XMLCertificateDefaultHandler handler = new XMLCertificateDefaultHandler(fluxSink, certificateParser);
                 parser.parse(inputStream, handler);
                 log.warn("Cert list extracted!");
             } catch (Exception ex) {
@@ -62,63 +67,61 @@ public class XMLInetCertificateLoader implements CertificateLoader {
         this.certificateParser = certificateParser;
     }
 
-    public void setTrusted(boolean trusted) {
-        this.trusted = trusted;
-    }
-}
+    /**
+     * SAX handler, который отдает загруженные сертификаты по мере из получения.
+     * 
+     * @author maksimgurin 
+     */
+    @Slf4j
+    private static class XMLCertificateDefaultHandler extends DefaultHandler {
+        private FluxSink<Certificate> fluxSink;
+        private CertificateParser certificateParser;
+        private StringBuilder certBuilder = new StringBuilder();
 
-@Slf4j
-class XMLCertificateDefaultHandler extends DefaultHandler {
-    private FluxSink<Certificate> fluxSink;
-    private boolean trusted;
-    private CertificateParser certificateParser;
-    private StringBuilder certBuilder = new StringBuilder();
-    
-    private final String CERT_DATA_ENCODED_START_NAME = "Данные";
-    
-    private boolean readingCertData = false;
+        private final String certPemDataElementName = "Данные";
 
-    public XMLCertificateDefaultHandler(FluxSink<Certificate> fluxSink, boolean trusted, CertificateParser certificateParser) {
-        this.fluxSink = fluxSink;
-        this.trusted = trusted;
-        this.certificateParser = certificateParser;
-    }
+        private boolean readingPem;
 
-    @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        if (CERT_DATA_ENCODED_START_NAME.equals(qName)) {
-            readingCertData = true;
-            certBuilder = new StringBuilder(X509Factory.BEGIN_CERT).append("\n");
+        XMLCertificateDefaultHandler(FluxSink<Certificate> fluxSink, CertificateParser certificateParser) {
+            this.fluxSink = fluxSink;
+            this.certificateParser = certificateParser;
         }
-    }
 
-    @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
-        if (CERT_DATA_ENCODED_START_NAME.equals(qName)) {
-            readingCertData = false;
-            certBuilder.append("\n").append(X509Factory.END_CERT);
-            String certData = certBuilder.toString();
-            try {
-                MongoCertificateData data = certificateParser.parseRawDataCertificate(certData);
-                data.setTrusted(trusted);
-                log.debug("Extracted cert {} for subject {}", data.getSn(), data.getSubject());
-                fluxSink.next(data);
-            } catch (Exception ex) {
-                log.error("", ex);
-                fluxSink.error(ex);
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            if (certPemDataElementName.equals(qName)) {
+                readingPem = true;
+                certBuilder = new StringBuilder(BEGIN_CERT).append("\n");
             }
         }
-    }
 
-    @Override
-    public void endDocument() throws SAXException {
-        fluxSink.complete();
-    }
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            if (certPemDataElementName.equals(qName)) {
+                readingPem = false;
+                certBuilder.append("\n").append(END_CERT);
+                String certData = certBuilder.toString();
+                try {
+                    Certificate data = certificateParser.parseRawDataCertificate(certData);
+                    log.debug("Extracted cert {} with subject key {}", data.getSn(), data.getSubjectKey());
+                    fluxSink.next(data);
+                } catch (Exception ex) {
+                    log.error("", ex);
+                    fluxSink.error(ex);
+                }
+            }
+        }
 
-    @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
-        if (readingCertData) {
-            certBuilder.append(ch, start, length);
+        @Override
+        public void endDocument() throws SAXException {
+            fluxSink.complete();
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            if (readingPem) {
+                certBuilder.append(ch, start, length);
+            }
         }
     }
 }

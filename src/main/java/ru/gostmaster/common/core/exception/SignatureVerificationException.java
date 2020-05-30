@@ -1,5 +1,10 @@
 package ru.gostmaster.common.core.exception;
 
+/**
+ * Исключение при проверке подписи.
+ * 
+ * @author maksimgurin 
+ */
 public class SignatureVerificationException extends RuntimeException {
     public SignatureVerificationException() {
     }

@@ -3,6 +3,11 @@ package ru.gostmaster.common.data.verification;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+/**
+ * DTO для огранизации издателя или владельца сертификата.
+ * 
+ * @author maksimgurin 
+ */
 @Data
 public class CertificateSubject {
     private String organization;

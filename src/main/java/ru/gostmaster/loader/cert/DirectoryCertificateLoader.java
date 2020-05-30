@@ -7,12 +7,16 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import ru.gostmaster.common.data.cert.Certificate;
 import ru.gostmaster.common.spi.loader.CertificateLoader;
-import ru.gostmaster.util.FileUtils;
-import ru.gostmaster.model.MongoCertificateData;
 import ru.gostmaster.parser.CertificateParser;
+import ru.gostmaster.util.FileUtils;
 
 import java.util.function.Function;
 
+/**
+ * Компонент-загрузчик сертификатов из директории.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 @Slf4j
 public class DirectoryCertificateLoader implements CertificateLoader {
@@ -27,9 +31,8 @@ public class DirectoryCertificateLoader implements CertificateLoader {
         Flux<byte[]> fileContent = fileNamesFlux.flatMap(s -> FileUtils.fileContent(s));
         Flux<Certificate> res = fileContent.map(bytes -> {
             try {
-                MongoCertificateData mongoCertificateData = parser.parseRawDataCertificate(bytes);
-                mongoCertificateData.setTrusted(trusted);
-                return (Certificate) mongoCertificateData;
+                Certificate certificateData = parser.parseRawDataCertificate(bytes);
+                return certificateData;
             } catch (Exception ex) {
                 log.error("", ex.getMessage());
                 throw new RuntimeException(ex);

@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * Интерфейс для хранилища сертификатов.
  *
+ * @author maksimgurin 
  */
 public interface CertificateStorage {
 
@@ -20,7 +21,7 @@ public interface CertificateStorage {
     Mono<List<Certificate>> getCertificateChainForLeafSubject(String leafSubjectDn);
 
     /**
-     * Сохранить сертификаты
+     * Сохранить сертификаты.
      * @param certificateFlux сертификаты
      * @return void
      */
@@ -28,15 +29,19 @@ public interface CertificateStorage {
 
     /**
      * Удалиить все доверенные сертификаты.
-     * @return
+     * @return void
      */
     Mono<Void> deleteAllTrusted();
 
     /**
      * Удалить все промежуточные.
-     * @return
+     * @return void
      */
     Mono<Void> deleteAllIntermediate();
-    
+
+    /**
+     * Получить все сертификаты.
+     * @return сертификаты
+     */
     Flux<Certificate> getAll();
 }

@@ -28,3 +28,5 @@ http://rostelecom.ru/cdp/vguc1_5.crl
 http://company.rt.ru/cdp/guc_gost12.crl
 http://reestr-pki.ru/cdp/guc.crl
 http://cdp.skbkontur.ru/cdp/skbkontur-q1-2019.crl
+https://www.esphere.ru/assets/download/uc/korus_sng_2012.crl
+http://testca2012.cryptopro.ru/cdp/d00fb90e68827687ffd4e50c15aaa2dedb6a79f7.crl

@@ -12,15 +12,26 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Mono;
 
+/**
+ * Утилитный компонент, поддерживающий загрузку файлов с учетом редиректов.
+ * 
+ * @author maksimgurin 
+ */
 @Component
 @Slf4j
 public class FileDownloadHelper {
     
-    private static final String DEFAUL_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36";
+    private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) " +
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36";
     
     private RestTemplate restTemplate;
 
-    public Mono<Pair<String,byte[]>> download(String url) {
+    /**
+     * Загрузить файл.
+     * @param url ссылка
+     * @return Пара  ссылка - содержимое файла
+     */
+    public Mono<Pair<String, byte[]>> download(String url) {
         return Mono.create(monoSink -> {
             String fetchUrl = url;
             int status = -1;
@@ -28,7 +39,7 @@ public class FileDownloadHelper {
                 ResponseEntity<byte[]> exchange;
                 do {
                     HttpHeaders httpHeaders = new HttpHeaders();
-                    httpHeaders.add(HttpHeaders.USER_AGENT,DEFAUL_USER_AGENT);
+                    httpHeaders.add(HttpHeaders.USER_AGENT, DEFAULT_USER_AGENT);
                     HttpEntity requestEntity = new HttpEntity(httpHeaders);
                     
                     exchange = restTemplate.exchange(fetchUrl, HttpMethod.GET, requestEntity, byte[].class);
@@ -37,12 +48,12 @@ public class FileDownloadHelper {
                         fetchUrl = exchange.getHeaders().get(HttpHeaders.LOCATION).get(0);
                     }
                 } while (HttpStatus.resolve(status).is3xxRedirection());
-                Pair<String, byte[]> resPair = Pair.of(url,exchange.getBody());
+                Pair<String, byte[]> resPair = Pair.of(url, exchange.getBody());
                 monoSink.success(resPair);
             } catch (Exception ex) {
                 log.error("Error downloading from {}. Cause {}", url, ex.getMessage());
                 // нельзя тут ошибку. иначе пайп порвем
-                monoSink.success(Pair.of(url,new byte[0]));
+                monoSink.success(Pair.of(url, new byte[0]));
             }
         });
     }

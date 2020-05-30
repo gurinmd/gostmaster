@@ -6,6 +6,11 @@ import lombok.Data;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * DTO с информацией о результате проверке подписи.
+ * 
+ * @author maksimgurin 
+ */
 @Data
 public class SignatureInformationResult {
     

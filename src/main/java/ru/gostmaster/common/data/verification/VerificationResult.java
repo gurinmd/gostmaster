@@ -6,6 +6,11 @@ import lombok.Data;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * DTO для результата проверки подписи.
+ * 
+ * @author maksimgurin 
+ */
 @Data
 public class VerificationResult {
     
