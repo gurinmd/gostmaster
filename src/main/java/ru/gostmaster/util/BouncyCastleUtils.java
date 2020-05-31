@@ -14,6 +14,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.CRLDistPoint;
+import org.bouncycastle.asn1.x509.CertificatePolicies;
 import org.bouncycastle.asn1.x509.DistributionPoint;
 import org.bouncycastle.asn1.x509.DistributionPointName;
 import org.bouncycastle.asn1.x509.ExtendedKeyUsage;
@@ -21,6 +22,7 @@ import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyPurposeId;
+import org.bouncycastle.asn1.x509.PolicyInformation;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -28,10 +30,12 @@ import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import ru.gostmaster.dictionary.AlgorithmsNames;
+import ru.gostmaster.dictionary.CertificatePoliciesName;
 import ru.gostmaster.dictionary.ExtendedKeyUsageNames;
 import ru.gostmaster.dictionary.SubjectAttributesOID;
 import ru.gostmaster.verification.data.AlgorithmDescription;
 import ru.gostmaster.verification.data.CertificateKeyUsage;
+import ru.gostmaster.verification.data.CertificatePolicy;
 import ru.gostmaster.verification.data.CertificateSubject;
 import ru.gostmaster.verification.data.SignatureCertificateInfo;
 
@@ -129,6 +133,34 @@ public final class BouncyCastleUtils {
     }
 
     /**
+     * Получить идентификатор субъекта данного сертификата.
+     *
+     * @param certificateHolder сертификат
+     * @return идентификатор в виде строки
+     * @throws NoSuchAlgorithmException если алгоритм сертификата не поддерживается
+     * @throws IOException              в случае ошибки доступа к данным сертификата
+     */
+    public static String getSubjectKeyIdentifier(X509CertificateHolder certificateHolder) {
+        SubjectKeyIdentifier subjectKeyIdentifier = SubjectKeyIdentifier
+            .fromExtensions(certificateHolder.getExtensions());
+        byte[] keyBytes = subjectKeyIdentifier.getKeyIdentifier();
+        return Hex.toHexString(keyBytes);
+    }
+
+    /**
+     * Получить идентификатор субъекта данного сертификата в виде массива байтов.
+     *
+     * @param certificateHolder сертификат
+     * @return идентификатор в виде массива
+     */
+    public static byte[] getSubjectKeyIdentifierAsBytes(X509CertificateHolder certificateHolder) {
+        SubjectKeyIdentifier subjectKeyIdentifier = SubjectKeyIdentifier
+            .fromExtensions(certificateHolder.getExtensions());
+        byte[] keyBytes = subjectKeyIdentifier.getKeyIdentifier();
+        return keyBytes;
+    }
+
+    /**
      * Получить идентификатор издателя данного сертификата.
      *
      * @param certificate сертификат
@@ -144,6 +176,25 @@ public final class BouncyCastleUtils {
         if (extensionValue != null) {
             AuthorityKeyIdentifier authorityKeyIdentifier = AuthorityKeyIdentifier
                 .getInstance(new JcaX509ExtensionUtils().parseExtensionValue(extensionValue));
+            byte[] keyBytes = authorityKeyIdentifier.getKeyIdentifier();
+            res = Hex.toHexString(keyBytes);
+        }
+        return res;
+    }
+
+    /**
+     * Получить идентификатор издателя данного сертификата.
+     *
+     * @param certificateHolder сертификат
+     * @return идентификатор в виде строки
+     * @throws NoSuchAlgorithmException если алгоритм сертификата не поддерживается
+     * @throws IOException              в случае ошибки доступа к данным сертификата
+     */
+    public static String getAuthorityKeyIdentifier(X509CertificateHolder certificateHolder) {
+        AuthorityKeyIdentifier authorityKeyIdentifier = AuthorityKeyIdentifier
+            .fromExtensions(certificateHolder.getExtensions());
+        String res = null;
+        if (authorityKeyIdentifier != null) {
             byte[] keyBytes = authorityKeyIdentifier.getKeyIdentifier();
             res = Hex.toHexString(keyBytes);
         }
@@ -281,6 +332,8 @@ public final class BouncyCastleUtils {
         res.setSignatureAlgorithm(buildSignatureAlgDecription(certificateHolder));
 
         res.setKeyUsage(getKeyUsages(certificateHolder));
+        
+        res.setCertificatePolicies(getCertificatePolices(certificateHolder));
 
         res.setValidFrom(certificateHolder.getNotBefore());
         res.setValidTo(certificateHolder.getNotAfter());
@@ -332,6 +385,20 @@ public final class BouncyCastleUtils {
         res.setName(endAlgName);
         return res;
     }
+    
+    private static List<CertificatePolicy> getCertificatePolices(X509CertificateHolder certificateHolder) {
+        CertificatePolicies certificatePolicies = CertificatePolicies.fromExtensions(certificateHolder.getExtensions());
+        List<CertificatePolicy> res = Stream.of(certificatePolicies.getPolicyInformation())
+            .map(PolicyInformation::getPolicyIdentifier)
+            .map(objectIdentifier -> {
+                CertificatePolicy policy = new CertificatePolicy();
+                policy.setOid(objectIdentifier.getId());
+                policy.setName(CertificatePoliciesName.getPolicyName(objectIdentifier.getId()));
+                return policy;
+            })
+            .collect(Collectors.toList());
+        return res;
+    }
 
     private static List<CertificateKeyUsage> getKeyUsages(X509CertificateHolder certificateHolder) {
         ExtendedKeyUsage extendedKeyUsage = ExtendedKeyUsage.fromExtensions(certificateHolder.getExtensions());
@@ -347,4 +414,5 @@ public final class BouncyCastleUtils {
 
         return res;
     }
+    
 }

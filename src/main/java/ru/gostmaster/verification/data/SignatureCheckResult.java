@@ -16,7 +16,7 @@ import java.util.List;
 public class SignatureCheckResult {
     
     @JsonProperty("verification_steps")
-    private List<Step> verificationSteps;
+    private List<CheckResult> verificationCheckResults;
     
     @JsonProperty("signature_certificate_info")
     private SignatureCertificateInfo signatureCertificateInfo;

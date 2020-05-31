@@ -15,10 +15,10 @@ public interface CertificateStorage {
 
     /**
      * Получаем цепочку сертификатов от листа до головного.
-     * @param leafSubjectDn subject атрибут листа
+     * @param subjectKey идентификатор сертификата - листа
      * @return цепочка сертификатов.
      */
-    Mono<List<Certificate>> getCertificateChainForLeafSubject(String leafSubjectDn);
+    Mono<List<Certificate>> getCertificateChainForLeafKey(String subjectKey);
 
     /**
      * Сохранить сертификаты.

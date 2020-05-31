@@ -11,7 +11,7 @@ import java.util.Date;
  * @author maksimgurin 
  */
 @Data
-public class Step {
+public class CheckResult {
     
     @JsonProperty("code")
     private String code;

@@ -23,6 +23,9 @@ public class SignatureCertificateInfo {
     
     @JsonProperty("key_usage")
     private List<CertificateKeyUsage> keyUsage;
+    
+    @JsonProperty("certificate_policies")
+    private List<CertificatePolicy> certificatePolicies;
 
     @JsonProperty("signature_algorithm")
     private AlgorithmDescription signatureAlgorithm;

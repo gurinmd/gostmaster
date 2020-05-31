@@ -68,7 +68,7 @@ public class CertificateParser {
             MongoCertificateData certificateData = new MongoCertificateData();
             certificateData.setCrlUrls(BouncyCastleUtils.getCrlUrlsFromCertificate(certificate));
             certificateData.setIssuerKey(BouncyCastleUtils.getAuthorityKeyIdentifier(certificate));
-            certificateData.setSubjectKey(BouncyCastleUtils.getAuthorityKeyIdentifier(certificate));
+            certificateData.setSubjectKey(BouncyCastleUtils.getSubjectKeyIdentifier(certificate));
             certificateData.setSn(certificate.getSerialNumber());
             certificateData.setStartDate(certificate.getNotBefore());
             certificateData.setEndDate(certificate.getNotAfter());

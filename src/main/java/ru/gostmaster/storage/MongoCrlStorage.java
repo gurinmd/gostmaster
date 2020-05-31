@@ -36,10 +36,8 @@ public class MongoCrlStorage implements CRLStorage {
     }
     
     @Override
-    public Flux<Crl> getAllByDownloadedFromOrCa(List<String> downloadedFrom, List<String> ca) {
-        Query query = Query.query(new Criteria()
-            .orOperator(Criteria.where(MongoCrlData.F_ISSUER_KEY).in(ca), 
-                Criteria.where(MongoCrlData.F_DONWLOADED_FROM).in(downloadedFrom)));
+    public Flux<Crl> getAllByIssuerKeys(List<String> issuerKeys) {
+        Query query = Query.query(Criteria.where(MongoCrlData.F_ISSUER_KEY).in(issuerKeys));
         return reactiveMongoTemplate.find(query, MongoCrlData.class).map(Function.identity());
     }
 

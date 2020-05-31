@@ -31,8 +31,8 @@ public class MongoCertificateStorage implements CertificateStorage {
     private ReactiveMongoTemplate reactiveMongoTemplate;
     
     @Override
-    public Mono<List<Certificate>> getCertificateChainForLeafSubject(String leafSubjectDn) {
-        MatchOperation matchOperation = Aggregation.match(Criteria.where("subject").is(leafSubjectDn));
+    public Mono<List<Certificate>> getCertificateChainForLeafKey(String subjectKey) {
+        MatchOperation matchOperation = Aggregation.match(Criteria.where(MongoCertificateData.F_SUBJECT_KEY).is(subjectKey));
         GraphLookupOperation graphLookupOperation = Aggregation
             .graphLookup(MongoCertificateData.COLLECTION)
             .startWith(MongoCertificateData.F_SUBJECT_EXPRESSION)

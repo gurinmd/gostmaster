@@ -14,12 +14,11 @@ import java.util.List;
 public interface CRLStorage {
 
     /**
-     * Получить все списки  по ссылкам, по которым обыли размещены, а так же по субъектам, для которых они опубликованы.
-     * @param urls ссылки
-     * @param ca субъекты (ключи субъектов)
+     * Получить все списки по субъектам, для которых они опубликованы.
+     * @param issuerKeys субъекты
      * @return flux
      */
-    Flux<Crl> getAllByDownloadedFromOrCa(List<String> urls, List<String> ca);
+    Flux<Crl> getAllByIssuerKeys(List<String> issuerKeys);
 
     /**
      * Получить все списки.

@@ -12,11 +12,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.gostmaster.core.exception.SignatureVerificationException;
 import ru.gostmaster.util.BouncyCastleUtils;
+import ru.gostmaster.verification.VerificationChecksService;
 import ru.gostmaster.verification.VerificationService;
-import ru.gostmaster.verification.VerificationStepService;
+import ru.gostmaster.verification.data.CheckResult;
 import ru.gostmaster.verification.data.SignatureCertificateInfo;
 import ru.gostmaster.verification.data.SignatureCheckResult;
-import ru.gostmaster.verification.data.Step;
 import ru.gostmaster.verification.data.VerificationResult;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ import java.util.Optional;
 @Slf4j
 public class VerificationServiceImpl implements VerificationService {
 
-    private VerificationStepService verificationStepService;
+    private VerificationChecksService verificationChecksService;
 
     @Override
     public Mono<VerificationResult> verify(CMSSignedData cmsSignedData) {
@@ -51,11 +51,11 @@ public class VerificationServiceImpl implements VerificationService {
             result.setSignaturesCount(signatureCheckResults.size());
 
             Boolean allStepsSuccess = signatureCheckResults.stream()
-                .flatMap(signatureCheckResult -> Optional.ofNullable(signatureCheckResult.getVerificationSteps())
+                .flatMap(signatureCheckResult -> Optional.ofNullable(signatureCheckResult.getVerificationCheckResults())
                     .orElse(Collections.emptyList()).stream())
-                .allMatch(Step::getSuccess);
+                .allMatch(CheckResult::getSuccess);
 
-            result.setQualificationStatus(allStepsSuccess);
+            result.setQualified(allStepsSuccess);
 
             return result;
         });
@@ -85,24 +85,27 @@ public class VerificationServiceImpl implements VerificationService {
     
     private Mono<SignatureCheckResult> verifySignature(SignerInformation signerInformation, 
                                                        X509CertificateHolder holder) {
-        Mono<Step> checkSigContent = verificationStepService.checkContentStep(signerInformation, holder);
-        Mono<Step> checkKeyUsage = verificationStepService.checkKeyUsageStep(signerInformation, holder);
-        Mono<Step> checkCertChain = verificationStepService.checkCertChainStep(signerInformation, holder);
-        Mono<Step> checkCertChainWithCrl = verificationStepService.checkCertChainWithCrlStep(signerInformation, holder);
 
-        Mono<List<Step>> checkStepsFlux = Flux.merge(checkSigContent, 
-            checkKeyUsage, checkCertChain, checkCertChainWithCrl).collectList();
+        Mono<List<CheckResult>> checks = Flux.fromIterable(verificationChecksService.getChecks())
+            .flatMap(stepVerification -> {
+                if (stepVerification.isEnabled()) {
+                    return stepVerification.verify(signerInformation, holder);
+                } else {
+                    return Mono.empty();
+                }
+            })
+            .collectList();
         
         Mono<SignatureCertificateInfo> certificateInfoMono = Mono.fromCallable(() -> 
             BouncyCastleUtils.buildSignatureCertificateInfo(signerInformation, holder)
         );
         
-        return Mono.zip(checkStepsFlux, certificateInfoMono)
+        return Mono.zip(checks, certificateInfoMono)
             .map(pair -> new SignatureCheckResult(pair.getT1(), pair.getT2()));
     }
     
     @Autowired
-    public void setVerificationStepService(VerificationStepService verificationStepService) {
-        this.verificationStepService = verificationStepService;
+    public void setVerificationChecksService(VerificationChecksService verificationChecksService) {
+        this.verificationChecksService = verificationChecksService;
     }
 }

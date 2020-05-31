@@ -23,6 +23,6 @@ public class VerificationResult {
     @JsonProperty("signatures")
     private List<SignatureCheckResult> signatures;
     
-    @JsonProperty("qualification_status")
-    private Boolean qualificationStatus;
+    @JsonProperty("qualified")
+    private Boolean qualified;
 }

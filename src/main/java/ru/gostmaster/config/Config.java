@@ -2,6 +2,7 @@ package ru.gostmaster.config;
 
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -14,9 +15,16 @@ import ru.gostmaster.loader.crl.XMLInetCrlLoader;
 import ru.gostmaster.spi.loader.CRLLoader;
 import ru.gostmaster.storage.MongoCertificateStorage;
 import ru.gostmaster.storage.MongoCrlStorage;
+import ru.gostmaster.verification.Check;
+import ru.gostmaster.verification.VerificationChecksService;
+import ru.gostmaster.verification.impl.VerificationChecksServiceIImpl;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Класс для Spring Java кофига приложения.
@@ -65,5 +73,19 @@ public class Config {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    /**
+     * Автоматом подтягиваем из контекста все проверки.
+     * @param applicationContext контекст
+     * @return объект со списком проверок
+     */
+    @Bean
+    @Autowired
+    public VerificationChecksService verificationChecksService(ApplicationContext applicationContext) {
+        Map<String, Check> beansOfType = applicationContext.getBeansOfType(Check.class);
+        List<Check> checks = Optional.ofNullable(beansOfType).orElse(Collections.emptyMap())
+            .values().stream().collect(Collectors.toList());
+        return new VerificationChecksServiceIImpl(checks);
     }
 }
