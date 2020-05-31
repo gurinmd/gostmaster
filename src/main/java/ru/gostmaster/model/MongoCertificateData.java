@@ -5,7 +5,7 @@ import lombok.ToString;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import ru.gostmaster.common.data.cert.Certificate;
+import ru.gostmaster.data.cert.Certificate;
 
 import java.math.BigInteger;
 import java.util.Date;

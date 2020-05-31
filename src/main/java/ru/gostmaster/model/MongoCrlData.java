@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.ToString;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import ru.gostmaster.common.data.crl.Crl;
+import ru.gostmaster.data.crl.Crl;
 
 import java.util.Date;
 

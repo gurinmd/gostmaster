@@ -6,7 +6,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.springframework.stereotype.Component;
-import ru.gostmaster.common.data.cert.Certificate;
+import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.model.MongoCertificateData;
 import ru.gostmaster.parser.exception.CertificateParserException;
 import ru.gostmaster.util.BouncyCastleUtils;

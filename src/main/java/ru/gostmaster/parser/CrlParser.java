@@ -7,7 +7,7 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.springframework.stereotype.Component;
-import ru.gostmaster.common.data.crl.Crl;
+import ru.gostmaster.data.crl.Crl;
 import ru.gostmaster.model.MongoCrlData;
 import ru.gostmaster.parser.exception.CrlParserException;
 import ru.gostmaster.util.BouncyCastleUtils;

@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import ru.gostmaster.common.data.crl.Crl;
-import ru.gostmaster.common.reactor.CrlFluxHelper;
-import ru.gostmaster.common.spi.loader.CRLLoader;
+import ru.gostmaster.data.crl.Crl;
+import ru.gostmaster.reactor.CrlFluxHelper;
+import ru.gostmaster.spi.loader.CRLLoader;
 import ru.gostmaster.util.FileUtils;
 
 /**

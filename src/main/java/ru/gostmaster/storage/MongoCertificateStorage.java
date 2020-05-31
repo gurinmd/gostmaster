@@ -12,9 +12,9 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.gostmaster.common.data.cert.Certificate;
-import ru.gostmaster.common.spi.storage.CertificateStorage;
+import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.model.MongoCertificateData;
+import ru.gostmaster.spi.storage.CertificateStorage;
 import ru.gostmaster.util.CollectionsUtils;
 
 import java.util.List;

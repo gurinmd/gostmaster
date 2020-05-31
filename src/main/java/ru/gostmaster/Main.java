@@ -35,7 +35,10 @@ public class Main {
 //
 //        CMSSignedData signedData = new CMSSignedData(new CMSProcessableByteArray(dataBytes), sigByttes);
 //        SignerInformation signerInformation = signedData.getSignerInfos().getSigners().stream().findAny().get();
-//        X509CertificateHolder holder = signedData.getCertificates().getMatches(null).stream().findAny().get();
+//        signedData.getSignerInfos().getSigners();
+//        
+//        X509CertificateHolder holder = (X509CertificateHolder) signedData.getCertificates()
+//            .getMatches(signerInformation.getSID()).stream().findAny().get();
 //
 ////        CertificateFactory factory = CertificateFactory.getInstance("X509", BouncyCastleProvider.PROVIDER_NAME);
 ////        X509Certificate certificate = (X509Certificate) factory.generateCertificate(new FileInputStream(cer));

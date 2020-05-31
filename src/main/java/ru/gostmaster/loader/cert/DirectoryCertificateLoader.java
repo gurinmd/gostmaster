@@ -5,9 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
-import ru.gostmaster.common.data.cert.Certificate;
-import ru.gostmaster.common.spi.loader.CertificateLoader;
+import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.parser.CertificateParser;
+import ru.gostmaster.spi.loader.CertificateLoader;
 import ru.gostmaster.util.FileUtils;
 
 import java.util.function.Function;

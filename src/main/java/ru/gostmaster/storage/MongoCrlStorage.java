@@ -7,9 +7,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.gostmaster.common.data.crl.Crl;
-import ru.gostmaster.common.spi.storage.CRLStorage;
+import ru.gostmaster.data.crl.Crl;
 import ru.gostmaster.model.MongoCrlData;
+import ru.gostmaster.spi.storage.CRLStorage;
 
 import java.util.List;
 import java.util.function.Function;

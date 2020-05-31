@@ -5,13 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-import ru.gostmaster.common.core.updater.CRLUpdater;
-import ru.gostmaster.common.core.updater.CertificateUpdater;
-import ru.gostmaster.common.spi.loader.CRLLoader;
+import ru.gostmaster.core.updater.CRLUpdater;
+import ru.gostmaster.core.updater.CertificateUpdater;
 import ru.gostmaster.loader.cert.DirectoryCertificateLoader;
 import ru.gostmaster.loader.cert.XMLInetCertificateLoader;
 import ru.gostmaster.loader.crl.ListCrlLoader;
 import ru.gostmaster.loader.crl.XMLInetCrlLoader;
+import ru.gostmaster.spi.loader.CRLLoader;
 import ru.gostmaster.storage.MongoCertificateStorage;
 import ru.gostmaster.storage.MongoCrlStorage;
 

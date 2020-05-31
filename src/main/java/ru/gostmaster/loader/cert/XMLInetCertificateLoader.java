@@ -9,9 +9,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import ru.gostmaster.common.data.cert.Certificate;
-import ru.gostmaster.common.spi.loader.CertificateLoader;
+import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.parser.CertificateParser;
+import ru.gostmaster.spi.loader.CertificateLoader;
 
 import java.io.InputStream;
 import java.net.URL;

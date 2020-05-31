@@ -9,9 +9,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import ru.gostmaster.common.data.crl.Crl;
-import ru.gostmaster.common.reactor.CrlFluxHelper;
-import ru.gostmaster.common.spi.loader.CRLLoader;
+import ru.gostmaster.data.crl.Crl;
+import ru.gostmaster.reactor.CrlFluxHelper;
+import ru.gostmaster.spi.loader.CRLLoader;
 
 import java.io.InputStream;
 import java.net.URL;

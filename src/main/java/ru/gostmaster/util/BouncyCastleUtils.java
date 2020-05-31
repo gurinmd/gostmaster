@@ -24,21 +24,16 @@ import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
-import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.CMSProcessableByteArray;
-import org.bouncycastle.cms.CMSSignedData;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.util.encoders.Hex;
-import org.springframework.data.util.Pair;
 import org.springframework.util.StringUtils;
-import ru.gostmaster.common.data.verification.AlgorithmDescription;
-import ru.gostmaster.common.data.verification.CertificateKeyUsage;
-import ru.gostmaster.common.data.verification.CertificateSubject;
-import ru.gostmaster.common.data.verification.SignatureCertificateInfo;
-import ru.gostmaster.common.data.verification.SignatureInformationResult;
 import ru.gostmaster.dictionary.AlgorithmsNames;
 import ru.gostmaster.dictionary.ExtendedKeyUsageNames;
 import ru.gostmaster.dictionary.SubjectAttributesOID;
+import ru.gostmaster.verification.data.AlgorithmDescription;
+import ru.gostmaster.verification.data.CertificateKeyUsage;
+import ru.gostmaster.verification.data.CertificateSubject;
+import ru.gostmaster.verification.data.SignatureCertificateInfo;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -47,7 +42,6 @@ import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -142,7 +136,8 @@ public final class BouncyCastleUtils {
      * @throws NoSuchAlgorithmException если алгоритм сертификата не поддерживается
      * @throws IOException              в случае ошибки доступа к данным сертификата
      */
-    public static String getAuthorityKeyIdentifier(X509Certificate certificate) throws NoSuchAlgorithmException, IOException {
+    public static String getAuthorityKeyIdentifier(X509Certificate certificate) throws NoSuchAlgorithmException, 
+        IOException {
         byte[] extensionValue = certificate
             .getExtensionValue(Extension.authorityKeyIdentifier.getId());
         String res = null;
@@ -270,45 +265,14 @@ public final class BouncyCastleUtils {
     }
 
     /**
-     * Построить объект SignatureInformationResult из подписанных данных и данных о подписанте.
-     *
-     * @param signerInformation данные о подписанте
-     * @param cmsSignedData     подписанные данные
-     * @return SignatureInformationResult
-     */
-    public static SignatureInformationResult fromSignatureInformationAndSignedData(SignerInformation signerInformation,
-                                                                                   CMSSignedData cmsSignedData) {
-        return fromSignatureInformationAndCertificates(signerInformation,
-            cmsSignedData.getCertificates().getMatches(signerInformation.getSID()));
-    }
-
-    /**
-     * Построить объект SignatureInformationResult из сертификатов и данных о подписанте.
+     * Построить объект SignatureCertificateInfo из сертификатов и данных о подписанте.
      *
      * @param signerInformation  данные о подписанте
-     * @param certificateHolders подписанные данные
+     * @param certificateHolder сертификат
      * @return SignatureInformationResult
      */
-    public static SignatureInformationResult fromSignatureInformationAndCertificates(SignerInformation signerInformation,
-                                                                                     Collection<X509CertificateHolder> certificateHolders) {
-        SignatureInformationResult information = new SignatureInformationResult();
-        information.setSignedAt(BouncyCastleUtils.getSignedDate(signerInformation));
-        List<SignatureCertificateInfo> certInfos = certificateHolders.stream()
-            .map(cert -> BouncyCastleUtils.fromSignatureCertificateHolder(cert, signerInformation))
-            .collect(Collectors.toList());
-        information.setSignatureCertificateInfo(certInfos);
-        return information;
-    }
-
-    /**
-     * Получить информацию о сертификате в виде SignatureCertificateInfo.
-     *
-     * @param certificateHolder сертификат.
-     * @param signerInformation инфа о подписанте
-     * @return SignatureCertificateInfo
-     */
-    public static SignatureCertificateInfo fromSignatureCertificateHolder(X509CertificateHolder certificateHolder,
-                                                                          SignerInformation signerInformation) {
+    public static SignatureCertificateInfo buildSignatureCertificateInfo(SignerInformation signerInformation,
+                                                                         X509CertificateHolder certificateHolder) {
         SignatureCertificateInfo res = new SignatureCertificateInfo();
         res.setIssuer(buildSubject(certificateHolder.getIssuer()));
         res.setSubject(buildSubject(certificateHolder.getSubject()));
@@ -322,7 +286,7 @@ public final class BouncyCastleUtils {
         res.setValidTo(certificateHolder.getNotAfter());
         return res;
     }
-
+    
     /**
      * Сконструировать CertificateSubject на основании данных о владельце сертификата.
      *
@@ -349,30 +313,6 @@ public final class BouncyCastleUtils {
         subject.setOgrnip(BouncyCastleUtils.getAttributeValue(name, SubjectAttributesOID.OGRNIP));
 
         return subject;
-    }
-
-    /**
-     * Получить пары типа подписанные данные-подписант.
-     *
-     * @param signedData подписанные данные
-     * @return список пар
-     */
-    public static List<Pair<CMSSignedData, SignerInformation>> createSignerInfoList(CMSSignedData signedData) {
-        return signedData.getSignerInfos().getSigners().stream()
-            .map(signerInformation -> Pair.of(signedData, signerInformation))
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Создание представления подписанного содержимого в терминах BouncyCastle.
-     *
-     * @param data данные
-     * @param sig  подпись (DER)
-     * @return CMSSignedData
-     * @throws CMSException при ошибке
-     */
-    public static CMSSignedData createCMSSignedData(byte[] data, byte[] sig) throws CMSException {
-        return new CMSSignedData(new CMSProcessableByteArray(data), sig);
     }
 
     private static AlgorithmDescription buildHashAlgDescritpion(SignerInformation signerInformation) {
