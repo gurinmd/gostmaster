@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
 import ru.gostmaster.loader.CRLUrlLoader;
 import ru.gostmaster.loader.impl.cert.DirectoryCertificateLoader;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  * @author maksimgurin 
  */
 @Configuration
+@Import({SpringFoxConfig.class, WebfluxConfig.class})
 public class Config {
 
     /**

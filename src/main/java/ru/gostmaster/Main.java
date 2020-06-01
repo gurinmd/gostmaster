@@ -4,10 +4,12 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.config.EnableWebFlux;
-import ru.gostmaster.updater.DataUpdater;
+import ru.gostmaster.config.Config;
+import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
 
 import java.security.Security;
 
@@ -18,8 +20,10 @@ import java.security.Security;
  */
 @SpringBootApplication
 @EnableWebFlux
+@EnableSwagger2WebFlux
 @EnableReactiveMongoRepositories
 @EnableScheduling
+@Import(Config.class)
 public class Main {
     
     /**
@@ -31,7 +35,5 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         ApplicationContext context = SpringApplication.run(Main.class, args);
-        context.getBean(DataUpdater.class).doUpdate().block();
-        System.out.println();
     }
 }

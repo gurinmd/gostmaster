@@ -32,7 +32,7 @@ public class DataUpdater {
      *
      * @return void
      */
-    @Scheduled(cron = "* */4 * * *")
+    @Scheduled(cron = "* * */4 * * *")
     public Mono<Void> doUpdate() {
         //1. Загружаем сертификаты
         Mono<Void> certificateUploadedMono = certificateUpdater.uploadNewTrustedCertificates()

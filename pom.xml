@@ -19,6 +19,8 @@
         <java.version>1.8</java.version>
         <bouncy.castle.version>1.65</bouncy.castle.version>
         <blockhound.version>1.0.3.RELEASE</blockhound.version>
+        <swagger.version>3.0.0-SNAPSHOT</swagger.version>
+        <guava.version>29.0-jre</guava.version>
     </properties>
 
     <dependencies>
@@ -79,7 +81,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>29.0-jre</version>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
@@ -87,18 +89,30 @@
             <artifactId>blockhound</artifactId>
             <version>${blockhound.version}</version>
         </dependency>
-    </dependencies>
 
-    <!--	<build>-->
-    <!--		<plugins>-->
-    <!--			<plugin>-->
-    <!--				<groupId>org.springframework.boot</groupId>-->
-    <!--				<artifactId>spring-boot-maven-plugin</artifactId>-->
-    <!--			</plugin>-->
-    <!--		</plugins>-->
-    <!--	</build>-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-spring-webflux</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+    </dependencies>
+    
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
