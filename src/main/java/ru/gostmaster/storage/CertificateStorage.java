@@ -1,4 +1,4 @@
-package ru.gostmaster.spi.storage;
+package ru.gostmaster.storage;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

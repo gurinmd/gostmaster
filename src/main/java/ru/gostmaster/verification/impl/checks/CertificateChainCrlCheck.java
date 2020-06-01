@@ -1,15 +1,20 @@
 package ru.gostmaster.verification.impl.checks;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaCertStoreBuilder;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 import ru.gostmaster.data.cert.Certificate;
+import ru.gostmaster.data.crl.Crl;
 import ru.gostmaster.messages.Messages;
+import ru.gostmaster.storage.CRLStorage;
 import ru.gostmaster.storage.CertificateStorage;
 import ru.gostmaster.util.BouncyCastleUtils;
 import ru.gostmaster.util.GetterUtils;
@@ -29,64 +34,91 @@ import java.security.cert.CertificateRevokedException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXCertPathBuilderResult;
 import java.security.cert.TrustAnchor;
+import java.security.cert.X509CRL;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Проверка наличия цепочки сертификации без учета списка отозванных сертификатов.
- * 
- * @author maksimgurin 
+ * Проверка цепочки сертификатов с учетом CRL.
+ *
+ * @author maksimgurin
  */
-@Slf4j
 @Component
-public class CertificateChainCheck implements Check {
-    
+@Slf4j
+public class CertificateChainCrlCheck implements Check {
+
     private static final String CERTIFICATE_CHAIN_VALID = "Цепочка сертификатов успешно построена " +
-        "(без учета  списков отозванных сертификатов)";
-    private static final String CERTIFICATE_CHAIN_INVALID = "Ошибка построения цепочки сертификатов";
-    
+        "(с учетом списков отозванных сертификатов)";
+    private static final String CERTIFICATE_CHAIN_INVALID = "Ошибка построения цепочки сертификатов. " +
+        "Возможно, возникла проблема с одним из промежуточных сертификатов или не найден список отозванных " +
+        "сертификатов для одного из промежуточных";
+
+    @Setter(onMethod_ = {@Autowired})
+    private CRLStorage crlStorage;
+
+    @Setter(onMethod_ = {@Autowired})
     private CertificateStorage certificateStorage;
+
     private CertificateFactory certificateFactory;
 
-    public CertificateChainCheck() throws CertificateException, NoSuchProviderException {
-        this.certificateFactory = CertificateFactory.getInstance("X509", BouncyCastleProvider.PROVIDER_NAME);
+    public CertificateChainCrlCheck() throws CertificateException, NoSuchProviderException {
+        certificateFactory = CertificateFactory.getInstance("X509", BouncyCastleProvider.PROVIDER_NAME);
     }
-    
+
     @Override
     public Mono<CheckResult> verify(SignerInformation signerInformation, X509CertificateHolder certificateHolder) {
         String authorityKeyIdentified = BouncyCastleUtils.getAuthorityKeyIdentifier(certificateHolder);
         Mono<List<Certificate>> certificates = certificateStorage.getCertificateChainForLeafKey(authorityKeyIdentified);
-        Mono<Set<TrustAnchor>> anchors = certificates.map(certs -> buildTrustAnchors(certs));
-        Mono<CertStore> certStoreMono = certificates
-            .map(certs -> buildCertStoreForIntermediateAndSignatureCertificate(certs, certificateHolder));
 
-        Mono<CheckResult> res = Mono.zip(anchors, certStoreMono)
+        Mono<Set<TrustAnchor>> trustAnchorsMono = certificates.map(certs -> buildTrustAnchors(certs));
+
+        Mono<List<X509CRLHolder>> crlListMono = certificates.map(certs -> certs.stream().map(Certificate::getIssuerKey)
+            .filter(StringUtils::hasText)
+            .collect(Collectors.toList()))
+            .map(list -> {
+                list.add(BouncyCastleUtils.getAuthorityKeyIdentifier(certificateHolder));
+                return list;
+            })
+            .flatMap(authIds -> crlStorage.getAllByIssuerKeys(authIds).collectList())
+            .map(crls -> buildCrlHolderList(crls));
+
+        Mono<CertStore> certStoreMono = Mono.zip(certificates, crlListMono)
+            .map(pair -> buildCertStoreForIntermediateAndSignatureCertificate(pair.getT1(),
+                certificateHolder, pair.getT2()));
+
+        Mono<CheckResult> resultMono = Mono.zip(trustAnchorsMono, certStoreMono)
             .map(pair -> checkCertificateChain(pair.getT1(), pair.getT2(), certificateHolder));
-        
-        return res;
+
+        return resultMono;
     }
-    
-    private CheckResult checkCertificateChain(Set<TrustAnchor> trustAnchors, CertStore certStore, 
+
+    private CheckResult checkCertificateChain(Set<TrustAnchor> trustAnchors, CertStore certStore,
                                               X509CertificateHolder certificateHolder) {
         CheckResult checkResult = new CheckResult();
-        checkResult.setCode(CheckResults.CHECK_CERTIFICATE_CHAIN);
-        checkResult.setDescription(CheckResults.CHECK_CERTIFICATE_CHAIN_DESCRIPTION);
+        checkResult.setCode(CheckResults.CHECK_CERTIFICATE_CHAIN_WITH_CRL);
+        checkResult.setDescription(CheckResults.CHECK_CERTIFICATE_CHAIN_WITH_CRL_DESCRIPTION);
         try {
-            CertPathBuilder pathValidator = CertPathBuilder.getInstance("PKIX", BouncyCastleProvider.PROVIDER_NAME);
+            CertPathBuilder pathValidator = CertPathBuilder.getInstance("PKIX",
+                BouncyCastleProvider.PROVIDER_NAME);
+
             X509CertSelector targetConstraint = new X509CertSelector();
-            
+
             targetConstraint.setSubject(certificateHolder.getSubject().getEncoded());
-            
+
             PKIXBuilderParameters parameters = new PKIXBuilderParameters(trustAnchors, targetConstraint);
             parameters.addCertStore(certStore);
-            parameters.setRevocationEnabled(false);
+            parameters.setRevocationEnabled(true);
 
             PKIXCertPathBuilderResult res = (PKIXCertPathBuilderResult) pathValidator.build(parameters);
-           
+
             checkResult.setCreatedAt(new Date());
             checkResult.setResultDescription(CERTIFICATE_CHAIN_VALID);
             checkResult.setSuccess(true);
@@ -96,20 +128,10 @@ public class CertificateChainCheck implements Check {
             checkResult.setCreatedAt(new Date());
             checkResult.setResultDescription(getReadableErrorMessage(ex));
         }
-        
+
         return checkResult;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
-
-    @Autowired
-    public void setCertificateStorage(CertificateStorage certificateStorage) {
-        this.certificateStorage = certificateStorage;
-    }
-    
     private Set<TrustAnchor> buildTrustAnchors(List<Certificate> certificates) {
         Set<TrustAnchor> anchors = new HashSet<>();
         for (Certificate certificate : certificates) {
@@ -125,10 +147,25 @@ public class CertificateChainCheck implements Check {
             }
         }
         return anchors;
-    } 
-    
-    private CertStore buildCertStoreForIntermediateAndSignatureCertificate(List<Certificate> certificates, 
-                                                                           X509CertificateHolder signatureCertificate) {
+    }
+
+    private List<X509CRLHolder> buildCrlHolderList(List<Crl> crls) {
+        List<X509CRLHolder> res = new ArrayList<>();
+        for (Crl crl : crls) {
+            try {
+                X509CRL x509CRL = (X509CRL) certificateFactory.generateCRL(new ByteArrayInputStream(crl.getPemData()
+                    .getBytes()));
+                res.add(new X509CRLHolder(x509CRL.getEncoded()));
+            } catch (Exception ex) {
+                log.warn("", ex);
+            }
+        }
+        return res;
+    }
+
+    private CertStore buildCertStoreForIntermediateAndSignatureCertificate(List<Certificate> certificates,
+                                                                           X509CertificateHolder signatureCertificate,
+                                                                           List<X509CRLHolder> crls) {
         JcaCertStoreBuilder jcaCertStoreBuilder = new JcaCertStoreBuilder();
         jcaCertStoreBuilder.addCertificate(signatureCertificate);
         CertStore certStore = null;
@@ -143,6 +180,10 @@ public class CertificateChainCheck implements Check {
                 }
             }
         }
+
+        Optional.ofNullable(crls).orElse(Collections.emptyList())
+            .forEach(x509CRLHolder -> jcaCertStoreBuilder.addCRL(x509CRLHolder));
+
         try {
             certStore = jcaCertStoreBuilder.build();
         } catch (Exception e) {
@@ -164,5 +205,10 @@ public class CertificateChainCheck implements Check {
             res = CERTIFICATE_CHAIN_INVALID;
         }
         return res;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

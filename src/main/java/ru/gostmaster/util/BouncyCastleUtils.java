@@ -259,7 +259,8 @@ public final class BouncyCastleUtils {
             }
 
         } catch (Exception ex) {
-            log.error("", ex);
+            log.error("Не удалось получить ссылки на CRL из сертификата для " + certificate.getSubjectDN().toString(),
+                ex.getMessage());
         }
         return crlUrls;
     }

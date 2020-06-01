@@ -1,4 +1,4 @@
-package ru.gostmaster.spi.storage;
+package ru.gostmaster.storage;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,8 +34,9 @@ public interface CRLStorage {
 
     /**
      * Сохранить все списки из источника.
+     *
      * @param crl источник
      * @return mono
      */
-    Mono<Void> saveAllCrls(Flux<Crl> crl);
+    Mono<Crl> save(Crl crl);
 }

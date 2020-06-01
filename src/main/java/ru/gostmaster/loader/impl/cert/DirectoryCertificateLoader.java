@@ -1,4 +1,4 @@
-package ru.gostmaster.loader.cert;
+package ru.gostmaster.loader.impl.cert;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,8 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import ru.gostmaster.data.cert.Certificate;
+import ru.gostmaster.loader.CertificateLoader;
 import ru.gostmaster.parser.CertificateParser;
-import ru.gostmaster.spi.loader.CertificateLoader;
 import ru.gostmaster.util.FileUtils;
 
 import java.util.function.Function;

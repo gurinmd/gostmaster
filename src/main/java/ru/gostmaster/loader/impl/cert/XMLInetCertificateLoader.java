@@ -1,4 +1,4 @@
-package ru.gostmaster.loader.cert;
+package ru.gostmaster.loader.impl.cert;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +10,8 @@ import org.xml.sax.helpers.DefaultHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import ru.gostmaster.data.cert.Certificate;
+import ru.gostmaster.loader.CertificateLoader;
 import ru.gostmaster.parser.CertificateParser;
-import ru.gostmaster.spi.loader.CertificateLoader;
 
 import java.io.InputStream;
 import java.net.URL;

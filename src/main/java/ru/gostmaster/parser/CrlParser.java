@@ -70,10 +70,11 @@ public class CrlParser {
             crl.setPemData(toPem(crlHolder.getEncoded()));
             crl.setNextUpdate(crlHolder.getNextUpdate());
             crl.setThisUpdate(crlHolder.getThisUpdate());
+            crl.setIssuer(crlHolder.getIssuer().toString());
             crl.setDownloadedFrom(url);
             return crl;
         } catch (Exception ex) {
-            log.error("", ex);
+            log.debug("Ошибка разбора CRL по ссылке " + url, ex.getMessage());
             throw new CrlParserException(ex);
         }
     }

@@ -51,7 +51,7 @@ public class FileDownloadHelper {
                 Pair<String, byte[]> resPair = Pair.of(url, exchange.getBody());
                 monoSink.success(resPair);
             } catch (Exception ex) {
-                log.error("Error downloading from {}. Cause {}", url, ex.getMessage());
+                log.debug("Error downloading from {}. Cause {}", url, ex.getMessage());
                 // нельзя тут ошибку. иначе пайп порвем
                 monoSink.success(Pair.of(url, new byte[0]));
             }

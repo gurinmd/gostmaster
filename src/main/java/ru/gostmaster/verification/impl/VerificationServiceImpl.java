@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.gostmaster.core.exception.SignatureVerificationException;
 import ru.gostmaster.util.BouncyCastleUtils;
 import ru.gostmaster.verification.VerificationChecksService;
 import ru.gostmaster.verification.VerificationService;
@@ -18,6 +17,7 @@ import ru.gostmaster.verification.data.CheckResult;
 import ru.gostmaster.verification.data.SignatureCertificateInfo;
 import ru.gostmaster.verification.data.SignatureCheckResult;
 import ru.gostmaster.verification.data.VerificationResult;
+import ru.gostmaster.verification.exception.SignatureVerificationException;
 
 import java.util.ArrayList;
 import java.util.Collection;

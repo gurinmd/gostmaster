@@ -1,11 +1,13 @@
-package ru.gostmaster.core.updater;
+package ru.gostmaster.updater;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.gostmaster.data.cert.Certificate;
-import ru.gostmaster.spi.loader.CertificateLoader;
-import ru.gostmaster.spi.storage.CertificateStorage;
+import ru.gostmaster.loader.CertificateLoader;
+import ru.gostmaster.storage.CRLUrlStorage;
+import ru.gostmaster.storage.CertificateStorage;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,19 +23,23 @@ public class CertificateUpdater {
     private List<CertificateLoader> trustedCertificateLoaders;
     private List<CertificateLoader> intermediateCertificateLoaders;
     private CertificateStorage certificateStorage;
+    private CRLUrlStorage crlUrlStorage;
 
     /**
      * Конструктор.
-     * @param trustedCertificateLoaders загрузчики доверенных сертификатов
+     *
+     * @param trustedCertificateLoaders      загрузчики доверенных сертификатов
      * @param intermediateCertificateLoaders загрузчики промежуточных сертификатов
-     * @param certificateStorage хранилище сертификатов
+     * @param certificateStorage             хранилище сертификатов
      */
-    public CertificateUpdater(List<CertificateLoader> trustedCertificateLoaders, 
-                              List<CertificateLoader> intermediateCertificateLoaders, 
-                              CertificateStorage certificateStorage) {
+    public CertificateUpdater(List<CertificateLoader> trustedCertificateLoaders,
+                              List<CertificateLoader> intermediateCertificateLoaders,
+                              CertificateStorage certificateStorage,
+                              CRLUrlStorage crlUrlStorage) {
         this.trustedCertificateLoaders = trustedCertificateLoaders;
         this.intermediateCertificateLoaders = intermediateCertificateLoaders;
         this.certificateStorage = certificateStorage;
+        this.crlUrlStorage = crlUrlStorage;
     }
 
     /**
@@ -42,8 +48,15 @@ public class CertificateUpdater {
      */
     public Mono<Void> uploadNewTrustedCertificates() {
         Flux<Certificate> certificatesToLoad = loadTrustedCertificates();
-        return certificateStorage.deleteAllTrusted()
-            .then(certificateStorage.saveAllCertificates(certificatesToLoad));
+
+        Mono<Void> savedCrls = certificatesToLoad.flatMapIterable(certificate -> certificate.getCrlUrls())
+            .filter(StringUtils::hasText)
+            .flatMap(s -> crlUrlStorage.add(s))
+            .then();
+
+        // не будем удалять сертификаты. будем их перетирать.
+        return certificateStorage.saveAllCertificates(certificatesToLoad)
+            .then(savedCrls);
     }
 
     /**
@@ -52,8 +65,13 @@ public class CertificateUpdater {
      */
     public Mono<Void> uploadNewIntermediateCertificates() {
         Flux<Certificate> certificatesToLoad = loadIntermediateCertificates();
-        return certificateStorage.deleteAllIntermediate()
-            .then(certificateStorage.saveAllCertificates(certificatesToLoad));
+        Mono<Void> savedCrls = certificatesToLoad.flatMapIterable(certificate -> certificate.getCrlUrls())
+            .filter(StringUtils::hasText)
+            .flatMap(s -> crlUrlStorage.add(s))
+            .then();
+        // не будем удалять сертификаты. будем их перетирать.
+        return certificateStorage.saveAllCertificates(certificatesToLoad)
+            .then(savedCrls);
     }
     
     private Flux<Certificate> loadIntermediateCertificates() {

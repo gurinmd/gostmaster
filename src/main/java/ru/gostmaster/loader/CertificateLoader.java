@@ -1,4 +1,4 @@
-package ru.gostmaster.spi.loader;
+package ru.gostmaster.loader;
 
 import reactor.core.publisher.Flux;
 import ru.gostmaster.data.cert.Certificate;

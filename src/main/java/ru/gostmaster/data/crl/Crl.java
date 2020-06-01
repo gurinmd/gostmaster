@@ -4,25 +4,35 @@ import java.util.Date;
 
 /**
  * Общий интерфейс представления CRL.
- * 
- * @author maksimgurin 
+ *
+ * @author maksimgurin
  */
 public interface Crl {
 
     /**
      * Идентификатор издателя.
+     *
      * @return идентификатор издателя.
      */
     String getIssuerKey();
 
     /**
+     * Издатель сертификата.
+     *
+     * @return издатель
+     */
+    String getIssuer();
+
+    /**
      * Данные сертификата в формате PEM.
+     *
      * @return PEM представление
      */
     String getPemData();
 
     /**
      * Дата следующего обновления CRL.
+     *
      * @return дата
      */
     Date getNextUpdate();

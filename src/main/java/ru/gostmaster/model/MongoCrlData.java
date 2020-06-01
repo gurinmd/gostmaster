@@ -21,6 +21,7 @@ public class MongoCrlData implements Crl {
     public static final String F_DONWLOADED_FROM = "downloadedFrom";
     @Indexed
     private String issuerKey;
+    private String issuer;
     private String pemData;
     private Date nextUpdate;
     private Date thisUpdate;

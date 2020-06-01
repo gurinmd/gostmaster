@@ -1,7 +1,6 @@
-package ru.gostmaster.loader.crl;
+package ru.gostmaster.loader.impl.crl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.xml.sax.Attributes;
@@ -9,9 +8,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import ru.gostmaster.data.crl.Crl;
-import ru.gostmaster.reactor.CrlFluxHelper;
-import ru.gostmaster.spi.loader.CRLLoader;
+import ru.gostmaster.loader.CRLUrlLoader;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -26,13 +23,12 @@ import javax.xml.parsers.SAXParserFactory;
  */
 @Slf4j
 @Component
-public class XMLInetCrlLoader implements CRLLoader {
+public class XMLInetCrlUrlLoader implements CRLUrlLoader {
 
     private String url;
-    private CrlFluxHelper crlFluxHelper;
 
     @Override
-    public Flux<Crl> loadCertificateRevocationLists() {
+    public Flux<String> loadCrlUrls() {
         Flux<String> urlFlux = Flux.create(crlFluxSink -> {
             try {
                 log.info("Preparing to extract cert list from website {}", url);
@@ -48,19 +44,12 @@ public class XMLInetCrlLoader implements CRLLoader {
                 crlFluxSink.error(ex);
             }
         });
-
-        Flux<Crl> res = crlFluxHelper.getCrlFluxFromUrls(urlFlux);
-        return res;
+        return urlFlux;
     }
 
     @Value("${cert.xml.data.url}")
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    @Autowired
-    public void setCrlFluxHelper(CrlFluxHelper crlFluxHelper) {
-        this.crlFluxHelper = crlFluxHelper;
     }
 
     /**

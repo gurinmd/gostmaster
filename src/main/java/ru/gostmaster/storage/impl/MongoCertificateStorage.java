@@ -1,4 +1,4 @@
-package ru.gostmaster.storage;
+package ru.gostmaster.storage.impl;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.model.MongoCertificateData;
-import ru.gostmaster.spi.storage.CertificateStorage;
+import ru.gostmaster.storage.CertificateStorage;
 import ru.gostmaster.util.CollectionsUtils;
 
 import java.util.List;
