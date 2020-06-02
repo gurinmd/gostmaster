@@ -38,7 +38,7 @@ public class CheckContentCheck implements Check {
                 message = Messages.getMessage(Messages.INVALID_SIGNED_CONTENT);
             }
         } catch (Exception exception) {
-            log.warn("", exception);
+            log.debug("Ошибка провеки подписи [{}]", exception.getMessage());
             message = Messages.getMessage(Messages.INVALID_SIGNED_CONTENT);
             res = false;
         }
