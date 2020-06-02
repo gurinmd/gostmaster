@@ -17,6 +17,9 @@ public final class Messages {
     public static final String CERTIFICATE_NOT_YET_VALID = "CERTIFICATE_NOT_YET_VALID";
     public static final String CERTIFICATE_REVOKED = "CERTIFICATE_REVOKED";
     public static final String CERTIFICATE_VALID = "CERTIFICATE_VALID";
+
+    public static final String ERROR_UPLOADING_SIGNATURE = "ERROR_UPLOADING_SIGNATURE";
+    public static final String SIGNATURE_INVALID_FORMAT = "SIGNATURE_INVALID_FORMAT";
     
     private static Map<String, String> messages = new HashMap();
     
@@ -28,6 +31,11 @@ public final class Messages {
         messages.put(CERTIFICATE_NOT_YET_VALID, "Срок действия сертификата не наступил");
         messages.put(CERTIFICATE_REVOKED, "Сертификат был отозван");
         messages.put(CERTIFICATE_VALID, "Действительность сертификата подтверждена");
+
+        messages.put(ERROR_UPLOADING_SIGNATURE, "Ошибка загрузки файла и/или подписи");
+        messages.put(SIGNATURE_INVALID_FORMAT, "Неверный формат электронной подписи. " +
+            "Поддерживаются открепленные подписи формата DER и PEM");
+        
     }
     
     private Messages() { }

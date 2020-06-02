@@ -47,7 +47,7 @@ public class CRLUpdater {
             .flatMap(crl -> crlStorage.save(crl))
             .flatMap(crl -> crlUrlStorage.update(crl))
             .then()
-            .doFinally(signalType -> log.info("Данные о сертификатах и списках отозванных " +
+            .doFinally(signalType -> log.info("Данные оы списках отозванных " +
                 "сертификатов успешно обновлены!"));
         return res;
     }

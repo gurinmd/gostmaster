@@ -1,6 +1,7 @@
 package ru.gostmaster.updater;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import reactor.core.scheduler.Schedulers;
  * @author maksimgurin
  */
 @Component
+@Slf4j
 public class DataUpdater {
 
     @Setter(onMethod_ = {@Autowired})
@@ -32,21 +34,40 @@ public class DataUpdater {
      *
      * @return void
      */
-    @Scheduled(cron = "* * */4 * * *")
     public Mono<Void> doUpdate() {
         //1. Загружаем сертификаты
         Mono<Void> certificateUploadedMono = certificateUpdater.uploadNewTrustedCertificates()
             .then(certificateUpdater.uploadNewIntermediateCertificates())
-            .checkpoint("Сертификаты загружены");
+            .doFinally(signalType -> {
+                log.info("**************************");
+                log.info("* Сертификаты загружены! *");
+                log.info("**************************");
+            });
 
         //2. Загружаем дополнительные ссылки на CRL.
         Mono<Void> crlUrlUploadedMono = crlUrlUpdater.uploadNewCrlUrls()
-            .checkpoint("Ссылки на CRL извлечены");
+            .doFinally(signalType -> {
+                log.info("********************************************************");
+                log.info("* Ссылки на списки отозванных сертификатов обнолвлены! *");
+                log.info("********************************************************");
+            });
 
         //3. Загружаем CRL. После того, как были загружены сертификаты и ссылки
-        Mono<Void> updatedCrls = certificateUploadedMono.then(crlUrlUploadedMono).then(crlUpdater.updateCrls())
-            .checkpoint("CRL обновлены")
-            .subscribeOn(Schedulers.newElastic("data_updating_scheduler"));
+        Mono<Void> updatedCrls = certificateUploadedMono
+            .then(crlUrlUploadedMono).then(crlUpdater.updateCrls())
+            .doFinally(signalType -> {
+                log.info("********************************************************************");
+                log.info("* Данные сертификатов и списков отозванных сертификатов обновлены! *");
+                log.info("********************************************************************");
+            });
         return updatedCrls;
+    }
+
+    /**
+     * Обновление по расписанию.
+     */
+    @Scheduled(cron = "${data.update.cron.expression}")
+    public void doScheduledUpdate() {
+        doUpdate().subscribeOn(Schedulers.newElastic("data-update-scheduler")).subscribe();
     }
 }

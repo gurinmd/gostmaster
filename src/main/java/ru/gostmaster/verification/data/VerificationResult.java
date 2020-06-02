@@ -25,4 +25,13 @@ public class VerificationResult {
     
     @JsonProperty("qualified")
     private Boolean qualified;
+    
+    @JsonProperty("uploading_error")
+    private Boolean uploadingError;
+
+    @JsonProperty("uploading_error_description")
+    private String uploadingErrorDescription;
+
+    @JsonProperty("uploading_error_date")
+    private Date uploadingErrorDate;
 }
