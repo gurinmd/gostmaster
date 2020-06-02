@@ -36,7 +36,7 @@ public class DataUpdater {
      */
     public Mono<Void> doUpdate() {
         //1. Загружаем сертификаты
-        Mono<Void> certificateUploadedMono = certificateUpdater.uploadNewTrustedCertificates()
+        Mono<Void> certificateUploadedMono = Mono.defer(() -> certificateUpdater.uploadNewTrustedCertificates())
             .then(certificateUpdater.uploadNewIntermediateCertificates())
             .doFinally(signalType -> {
                 log.info("**************************");
