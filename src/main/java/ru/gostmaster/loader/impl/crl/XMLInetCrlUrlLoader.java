@@ -31,7 +31,7 @@ public class XMLInetCrlUrlLoader implements CRLUrlLoader {
     public Flux<String> loadCrlUrls() {
         Flux<String> urlFlux = Flux.create(crlFluxSink -> {
             try {
-                log.info("Preparing to extract cert list from website {}", url);
+                log.info("Preparing to extract crl list from website {}", url);
                 URLConnection urlConnection = new URL(url).openConnection();
                 InputStream inputStream = urlConnection.getInputStream();
 
@@ -44,7 +44,8 @@ public class XMLInetCrlUrlLoader implements CRLUrlLoader {
                 crlFluxSink.error(ex);
             }
         });
-        return urlFlux;
+        Flux<String> cachedUrlFlux = urlFlux.cache();
+        return cachedUrlFlux;
     }
 
     @Value("${cert.xml.data.url}")

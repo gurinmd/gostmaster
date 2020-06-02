@@ -1,5 +1,6 @@
 package ru.gostmaster.storage.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -22,6 +23,7 @@ import java.util.function.Function;
  * @author maksimgurin 
  */
 @Component
+@Slf4j
 public class MongoCrlStorage implements CRLStorage {
     
     private ReactiveMongoTemplate reactiveMongoTemplate;

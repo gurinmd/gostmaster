@@ -24,7 +24,7 @@ public class ListCrlUrlLoader implements CRLUrlLoader {
     @Override
     public Flux<String> loadCrlUrls() {
         log.info("Loading all crl from url list file {}", crlUrlsListFile);
-        Flux<String> urls = FileUtils.fileLines(crlUrlsListFile);
+        Flux<String> urls = FileUtils.fileLines(crlUrlsListFile).cache();
         return urls;
     }
 

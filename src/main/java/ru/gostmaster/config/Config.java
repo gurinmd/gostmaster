@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import ru.gostmaster.loader.CRLUrlLoader;
 import ru.gostmaster.loader.impl.cert.DirectoryCertificateLoader;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 @Import({SpringFoxConfig.class, WebfluxConfig.class})
 public class Config {
 
+    private static final int COMMON_DELAY = 30000;
+    
     /**
      * Bean для загрузки сертификатов.
      *
@@ -79,7 +82,12 @@ public class Config {
      */
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+        httpRequestFactory.setConnectionRequestTimeout(COMMON_DELAY);
+        httpRequestFactory.setConnectTimeout(COMMON_DELAY);
+        httpRequestFactory.setReadTimeout(COMMON_DELAY);
+        RestTemplate restTemplate;
+        return new RestTemplate(httpRequestFactory);
     }
 
     /**

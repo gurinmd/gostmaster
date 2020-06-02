@@ -42,7 +42,7 @@ public class DataUpdater {
                 log.info("**************************");
                 log.info("* Сертификаты загружены! *");
                 log.info("**************************");
-            });
+            }).cache();
 
         //2. Загружаем дополнительные ссылки на CRL.
         Mono<Void> crlUrlUploadedMono = crlUrlUpdater.uploadNewCrlUrls()
@@ -50,7 +50,7 @@ public class DataUpdater {
                 log.info("********************************************************");
                 log.info("* Ссылки на списки отозванных сертификатов обнолвлены! *");
                 log.info("********************************************************");
-            });
+            }).cache();
 
         //3. Загружаем CRL. После того, как были загружены сертификаты и ссылки
         Mono<Void> updatedCrls = certificateUploadedMono

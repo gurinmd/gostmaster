@@ -27,6 +27,7 @@ public class DirectoryCertificateLoader implements CertificateLoader {
 
     @Override
     public Flux<Certificate> loadCertificates() {
+        log.info("Preparing to load certificates from directory {}", certificateFilePath);
         Flux<String> fileNamesFlux = FileUtils.listFiles(certificateFilePath, "");
         Flux<byte[]> fileContent = fileNamesFlux.flatMap(s -> FileUtils.fileContent(s));
         Flux<Certificate> res = fileContent.map(bytes -> {
@@ -39,7 +40,7 @@ public class DirectoryCertificateLoader implements CertificateLoader {
             }
         }).map(Function.identity()).onErrorContinue((throwable, o) -> {
             log.error("", throwable);
-        });
+        }).cache();
         
         return res;
     }

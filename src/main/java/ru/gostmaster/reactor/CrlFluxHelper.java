@@ -20,7 +20,7 @@ import ru.gostmaster.parser.CrlParser;
 public class CrlFluxHelper {
     private CrlParser crlParser;
     private FileDownloadHelper fileDownloadHelper;
-
+    
     /**
      * Загрузки CRL и получение их в виде потока.
      * @param urls поток со ссылками

@@ -1,5 +1,6 @@
 package ru.gostmaster.storage.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import ru.gostmaster.data.cert.Certificate;
 import ru.gostmaster.model.MongoCertificateData;
 import ru.gostmaster.storage.CertificateStorage;
@@ -26,6 +28,7 @@ import java.util.function.Function;
  * @author maksimgurin 
  */
 @Component
+@Slf4j
 public class MongoCertificateStorage implements CertificateStorage {
     
     private ReactiveMongoTemplate reactiveMongoTemplate;
@@ -52,13 +55,15 @@ public class MongoCertificateStorage implements CertificateStorage {
     @Override
     public Mono<Void> saveAllCertificates(Flux<Certificate> certificateFlux) {
         Flux<Certificate> savedCertFlux = certificateFlux
+            .parallel()
+            .runOn(Schedulers.newElastic("cert-save-thread-pool"))
             .flatMap(certificate -> {
                 if (certificate.isTrusted()) {
                     return saveTrustedCertificate(certificate);
                 } else {
                     return saveIntermediateCertificate(certificate);
                 }
-            });
+            }).sequential();
         return savedCertFlux.then();
     }
 

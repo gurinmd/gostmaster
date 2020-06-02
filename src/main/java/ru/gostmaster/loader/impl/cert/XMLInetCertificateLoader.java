@@ -52,7 +52,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
                 log.error("", ex);
                 fluxSink.error(ex);
             }
-        });
+        }).cache();
         
         return certificateFlux;
     }
@@ -88,6 +88,11 @@ public class XMLInetCertificateLoader implements CertificateLoader {
         }
 
         @Override
+        public void startDocument() throws SAXException {
+            log.info("Start SAX parsing...");
+        }
+
+        @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             if (certPemDataElementName.equals(qName)) {
                 readingPem = true;
@@ -114,6 +119,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
 
         @Override
         public void endDocument() throws SAXException {
+            log.info("End SAX parsing");
             fluxSink.complete();
         }
 

@@ -40,10 +40,12 @@ public class CRLUpdater {
 //                crlUrl.getNextUpdate().compareTo(new Date()) < 0
 //        );
 
-        Mono<Void> res = urls.parallel().runOn(Schedulers.newElastic("crl-download-thread-pool"))
+        Mono<Void> res = urls.parallel().runOn(Schedulers.newParallel("crl-download-thread-pool"))
             .flatMap(crlUrl -> crlFluxHelper.getCrlFromUrl(crlUrl.getUrl()))
             .sequential()
             .onErrorContinue((throwable, o) -> log.debug("Error downloading from " + o, throwable.getMessage()))
+            .parallel()
+            .runOn(Schedulers.newElastic("crl-save-thread-pool"))
             .flatMap(crl -> crlStorage.save(crl))
             .flatMap(crl -> crlUrlStorage.update(crl))
             .then()
