@@ -1,5 +1,7 @@
 package ru.gostmaster.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiResponse;
@@ -35,6 +37,9 @@ public class SignatureVerificationController {
     @Setter(onMethod_ = {@Autowired})
     private VerificationService verificationService;
 
+    @Setter(onMethod_ = {@Autowired})
+    private ObjectMapper objectMapper;
+    
     /**
      * Проверить файлы.
      * @param data файл для проверки
@@ -63,7 +68,14 @@ public class SignatureVerificationController {
         Mono<ResponseEntity<VerificationResult>> res = Mono.zip(dataBytesMono, sigBytesMono)
             .map(pair -> CMSDataParser.parse(pair.getT1(), pair.getT2()))
             .flatMap(cmsSignedData -> verificationService.verify(cmsSignedData))
-            .map(verificationResult -> ResponseEntity.ok(verificationResult))
+            .map(verificationResult -> {
+                try {
+                    System.out.println(objectMapper.writeValueAsString(verificationResult));
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                }
+                return ResponseEntity.ok(verificationResult);
+            })
             .onErrorResume(SignatureUploadException.class, e -> {
                 VerificationResult verificationResult = new VerificationResult();
                 verificationResult.setUploadingErrorDate(new Date());

@@ -1,8 +1,5 @@
 package ru.gostmaster.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -23,7 +20,6 @@ import ru.gostmaster.verification.Check;
 import ru.gostmaster.verification.VerificationChecksService;
 import ru.gostmaster.verification.impl.VerificationChecksServiceIImpl;
 
-import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -100,16 +96,16 @@ public class Config {
         return new VerificationChecksServiceIImpl(checks);
     }
 
-    /**
-     * Настройка ObjectMapper.
-     * @return objectMapper
-     */
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.setDateFormat(DateFormat.getDateTimeInstance());
-        return objectMapper;
-    }
+//    /**
+//     * Настройка ObjectMapper.
+//     * @return objectMapper
+//     */
+//    @Bean
+//    public ObjectMapper objectMapper() {
+//        ObjectMapper objectMapper = new ObjectMapper();
+//        objectMapper.registerModule(new JavaTimeModule());
+//        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+//        objectMapper.setDateFormat(DateFormat.getDateTimeInstance());
+//        return objectMapper;
+//    }
 }
