@@ -1,6 +1,5 @@
 package ru.gostmaster;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +12,6 @@ import ru.gostmaster.config.Config;
 import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
 
 import java.security.Security;
-import java.util.Date;
 
 /**
  * Запускаем все.
@@ -37,7 +35,5 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         ApplicationContext context = SpringApplication.run(Main.class, args);
-        ObjectMapper objectMapper = context.getBean(ObjectMapper.class);
-        System.out.println(objectMapper.writeValueAsString(new Date()));
     }
 }

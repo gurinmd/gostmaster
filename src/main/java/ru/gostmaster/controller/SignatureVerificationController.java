@@ -1,6 +1,5 @@
 package ru.gostmaster.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -68,14 +67,7 @@ public class SignatureVerificationController {
         Mono<ResponseEntity<VerificationResult>> res = Mono.zip(dataBytesMono, sigBytesMono)
             .map(pair -> CMSDataParser.parse(pair.getT1(), pair.getT2()))
             .flatMap(cmsSignedData -> verificationService.verify(cmsSignedData))
-            .map(verificationResult -> {
-                try {
-                    System.out.println(objectMapper.writeValueAsString(verificationResult));
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                }
-                return ResponseEntity.ok(verificationResult);
-            })
+            .map(verificationResult -> ResponseEntity.ok(verificationResult))
             .onErrorResume(SignatureUploadException.class, e -> {
                 VerificationResult verificationResult = new VerificationResult();
                 verificationResult.setUploadingErrorDate(new Date());
