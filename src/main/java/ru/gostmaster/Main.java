@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.config.EnableWebFlux;
 import ru.gostmaster.config.Config;
-import ru.gostmaster.updater.DataUpdater;
 import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
 
 import java.security.Security;
@@ -36,6 +35,5 @@ public class Main {
     public static void main(String[] args) throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         ApplicationContext context = SpringApplication.run(Main.class, args);
-        context.getBean(DataUpdater.class).doScheduledUpdate();
     }
 }
