@@ -71,30 +71,30 @@ public class CertificatePolicyCheck implements Check {
             .map(String::valueOf)
             .collect(Collectors.toSet());
         
-        if (Objects.equals(oids, KS1_POLICIES)) {
-            res = true;
-            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
-                .getPolicyName(CertificatePoliciesName.KS1_OID));
-        } else if (Objects.equals(oids, KS2_POLICIES)) {
-            res = true;
-            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
-                .getPolicyName(CertificatePoliciesName.KS2_OID));
-        } else if (Objects.equals(oids, KS3_POLICIES)) {
-            res = true;
-            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
-                .getPolicyName(CertificatePoliciesName.KS3_OID));
-        } else if (Objects.equals(oids, KV1_POLICIES)) {
-            res = true;
-            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
-                .getPolicyName(CertificatePoliciesName.KV1_OID));
-        } else if (Objects.equals(oids, KV2_POLICIES)) {
-            res = true;
-            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
-                .getPolicyName(CertificatePoliciesName.KV2_OID));
-        } else if (Objects.equals(oids, KA1_POLICIES)) {
+        if (oids.contains(KA1_POLICIES)) {
             res = true;
             message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
                 .getPolicyName(CertificatePoliciesName.KA1_OID));
+        } else if (oids.containsAll(KV2_POLICIES)) {
+            res = true;
+            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
+                .getPolicyName(CertificatePoliciesName.KV2_OID));
+        } else if (oids.containsAll(KV1_POLICIES)) {
+            res = true;
+            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
+                .getPolicyName(CertificatePoliciesName.KV1_OID));
+        } else if (oids.containsAll(KS3_POLICIES)) {
+            res = true;
+            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
+                .getPolicyName(CertificatePoliciesName.KS3_OID));
+        } else if (oids.containsAll(KS2_POLICIES)) {
+            res = true;
+            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
+                .getPolicyName(CertificatePoliciesName.KS2_OID));
+        } else if (oids.containsAll(KS1_POLICIES)) {
+            res = true;
+            message = String.format(CORRECT_POLICY_TEMPLATE, CertificatePoliciesName
+                .getPolicyName(CertificatePoliciesName.KS1_OID));
         } else {
             res = false;
             message = INCORRECT_POLICY_TEMPLATE;
