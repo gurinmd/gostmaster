@@ -35,7 +35,8 @@ public class UpdateDataController {
     public Mono<Void> doSheduledUpdate() {
         if (semaphore.tryAcquire()) {
             dataUpdater.doUpdate()
-                .doOnSuccess(a -> semaphore.release());
+                .doOnSuccess(a -> semaphore.release())
+                .subscribe();
             return Mono.empty();
         } else {
             return Mono.empty();
