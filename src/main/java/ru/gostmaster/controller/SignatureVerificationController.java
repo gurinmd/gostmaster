@@ -31,6 +31,7 @@ import java.util.Date;
  * @author maksimgurin
  */
 @RestController
+@RequestMapping("/signature-verification")
 public class SignatureVerificationController {
 
     @Setter(onMethod_ = {@Autowired})
