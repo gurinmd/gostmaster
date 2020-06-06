@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.ToString;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import ru.gostmaster.data.cert.Certificate;
 
@@ -30,7 +31,9 @@ public class MongoCertificateData implements Certificate {
     
     @Id
     private ObjectId id;
+    @Indexed
     private String issuerKey;
+    @Indexed
     private String subjectKey;
     private BigInteger sn;
     private Date startDate;
