@@ -30,7 +30,7 @@ public class CRLUpdater {
 
     /**
      * Обновляем CRL на основании CRLUrlStorage.
-     *
+     *ч
      * @return void
      */
     public Mono<Void> updateCrls() {
@@ -48,9 +48,7 @@ public class CRLUpdater {
             .runOn(Schedulers.newElastic("crl-save-thread-pool"))
             .flatMap(crl -> crlStorage.save(crl))
             .flatMap(crl -> crlUrlStorage.update(crl))
-            .then()
-            .doFinally(signalType -> log.info("Данные оы списках отозванных " +
-                "сертификатов успешно обновлены!"));
+            .then();
         return res;
     }
-}
+} 

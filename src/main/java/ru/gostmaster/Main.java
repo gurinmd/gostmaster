@@ -9,7 +9,6 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.config.EnableWebFlux;
 import ru.gostmaster.config.Config;
-import springfox.documentation.swagger2.annotations.EnableSwagger2WebFlux;
 
 import java.security.Security;
 
@@ -20,7 +19,6 @@ import java.security.Security;
  */
 @SpringBootApplication
 @EnableWebFlux
-@EnableSwagger2WebFlux
 @EnableReactiveMongoRepositories
 @EnableScheduling
 @Import(Config.class)

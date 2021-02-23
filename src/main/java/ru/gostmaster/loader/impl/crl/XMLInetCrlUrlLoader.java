@@ -68,6 +68,7 @@ public class XMLInetCrlUrlLoader implements CRLUrlLoader {
         private String currentElement;
         private String previousElement;
         private Boolean inCrlAddress = false;
+        private Integer crlCount = 0;
 
         XMLCRLDefaultHandler(FluxSink<String> fluxSink) {
             this.fluxSink = fluxSink;
@@ -86,6 +87,7 @@ public class XMLInetCrlUrlLoader implements CRLUrlLoader {
                 String address = urlBuilder.toString();
                 log.debug("Added address {}", address);
                 fluxSink.next(address);
+                crlCount++;
                 urlBuilder = new StringBuilder();
                 inCrlAddress = false;
             }
@@ -100,6 +102,7 @@ public class XMLInetCrlUrlLoader implements CRLUrlLoader {
 
         @Override
         public void endDocument() throws SAXException {
+            log.info("Found {} crl links", crlCount);
             fluxSink.complete();
         }
     }

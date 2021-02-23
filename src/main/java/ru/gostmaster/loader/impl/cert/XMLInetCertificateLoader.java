@@ -77,7 +77,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
         private FluxSink<Certificate> fluxSink;
         private CertificateParser certificateParser;
         private StringBuilder certBuilder = new StringBuilder();
-
+        private int extractedCerts;
         private final String certPemDataElementName = "Данные";
 
         private boolean readingPem;
@@ -110,6 +110,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
                     Certificate data = certificateParser.parseRawDataCertificate(certData);
                     log.debug("Extracted cert {} with subject key {}", data.getSn(), data.getSubjectKey());
                     fluxSink.next(data);
+                    extractedCerts++;
                 } catch (Exception ex) {
                     log.error("", ex);
                     fluxSink.error(ex);
@@ -119,7 +120,7 @@ public class XMLInetCertificateLoader implements CertificateLoader {
 
         @Override
         public void endDocument() throws SAXException {
-            log.info("End SAX parsing");
+            log.info("End SAX parsing. Found {} certificates", extractedCerts);
             fluxSink.complete();
         }
 
